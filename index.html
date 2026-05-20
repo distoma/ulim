@@ -1,0 +1,199 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>하루온 | 이주 배경학생 통합 지원</title>
+  <meta name="description" content="이주 배경학생의 학교 적응, 다국어 소통, 교사 관리, AI 행정 문서 생성을 돕는 통합 홈페이지" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="logged-out">
+  <section class="login-screen" id="loginScreen" aria-label="로그인 화면">
+    <div class="login-visual">
+      <a class="brand login-brand" href="#home" aria-label="하루온 홈">
+        <span class="brand-mark">하</span>
+        <span><strong>하루온</strong><small>이주 배경학생 통합 지원</small></span>
+      </a>
+      <h1>학생과 선생님이 각자의 화면에서 만나는 따뜻한 학교 지원 공간</h1>
+      <p>학생은 마음 체크인과 다국어 대화를, 교사는 학생 관리와 AI 행정 문서 생성을 사용할 수 있습니다.</p>
+      <div class="login-sample">
+        <strong>체험 계정</strong>
+        <span>학생: <code>student01 / 1234</code></span>
+        <span>교사: <code>teacher01 / 1234</code></span>
+      </div>
+    </div>
+
+    <form class="login-card" id="loginForm">
+      <p class="eyebrow">Login</p>
+      <h2>로그인</h2>
+      <div class="role-toggle" aria-label="역할 선택">
+        <label><input type="radio" name="role" value="student" checked /> 학생</label>
+        <label><input type="radio" name="role" value="teacher" /> 교사</label>
+      </div>
+      <label>아이디<input id="loginId" autocomplete="username" placeholder="예: student01" required /></label>
+      <label>비밀번호<input id="loginPassword" type="password" autocomplete="current-password" placeholder="비밀번호" required /></label>
+      <button class="primary full" type="submit">로그인</button>
+      <p class="muted" id="firebaseStatus">Firebase 설정 전에는 체험 계정으로 로그인됩니다.</p>
+    </form>
+  </section>
+
+  <header class="site-header app-only">
+    <a class="brand" href="#home" aria-label="하루온 홈">
+      <span class="brand-mark">하</span>
+      <span><strong>하루온</strong><small id="roleSubtitle">통합 지원</small></span>
+    </a>
+    <nav class="top-nav" aria-label="주요 메뉴">
+      <a href="#student" data-nav-role="student">학생 도움</a>
+      <a href="#lounge" data-nav-role="student">다국어 대화</a>
+      <a href="#teacher" data-nav-role="teacher">교사 관리</a>
+      <a href="#ai-docs" data-nav-role="teacher">AI 행정</a>
+    </nav>
+    <div class="user-tools">
+      <span id="currentUserLabel">로그인 전</span>
+      <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+    </div>
+  </header>
+
+  <main class="app-only" id="appShell">
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">기존 하루 체크인을 확장한 통합 홈페이지</p>
+        <h1 id="heroTitle">낯선 학교생활을 편안한 하루로 이어 줍니다.</h1>
+        <p id="heroText">학생은 모국어로 마음과 궁금한 점을 나누고, 교사는 도움이 필요한 학생을 빠르게 살핍니다.</p>
+        <div class="hero-actions" id="heroActions"></div>
+      </div>
+      <aside class="quick-card" aria-label="오늘의 빠른 지원">
+        <h2 id="quickTitle">오늘 바로 할 일</h2>
+        <ol class="today-list" id="todayList"></ol>
+        <p class="muted">입력 자료는 Firebase 설정 시 Firestore에 저장되고, 설정 전에는 이 브라우저에만 임시 저장됩니다.</p>
+      </aside>
+    </section>
+
+    <section class="panel student-panel role-section" id="student" data-section-role="student">
+      <div class="section-head">
+        <p class="eyebrow">Student Support</p>
+        <h2>학생 도움 공간</h2>
+        <p>모국어 선택, 하루 체크인, 비공개 상담 요청, 학교생활 안내를 한곳에서 제공합니다.</p>
+      </div>
+      <div class="support-grid">
+        <article class="feature"><span class="feature-icon">말</span><h3>모국어 안내</h3><p>한국어, 베트남어, 중국어, 영어, 몽골어, 필리핀어 예시 문구를 제공합니다.</p></article>
+        <article class="feature"><span class="feature-icon">맘</span><h3>정서 체크인</h3><p>오늘의 기분과 힘든 일을 기록하고 필요하면 담임교사에게 도움을 요청합니다.</p></article>
+        <article class="feature"><span class="feature-icon">길</span><h3>학교생활 가이드</h3><p>급식, 준비물, 출결, 상담, 방과후 안내를 쉬운 말로 정리합니다.</p></article>
+        <article class="feature"><span class="feature-icon">쉼</span><h3>비공개 상담</h3><p>학생이 원할 때 교사에게만 보이는 상담 요청을 남길 수 있습니다.</p></article>
+      </div>
+
+      <div class="checkin-box">
+        <div>
+          <h3>오늘 체크인</h3>
+          <p class="muted">Firebase 설정 시 `checkins` 컬렉션에 저장됩니다.</p>
+        </div>
+        <div class="mood-row" id="moodRow" aria-label="기분 선택"></div>
+        <textarea id="checkinText" placeholder="오늘 좋았던 일, 어려웠던 일, 궁금한 점을 적어 보세요. 모국어로 써도 괜찮아요."></textarea>
+        <label class="inline"><input type="checkbox" id="helpCheck" /> 선생님 도움이 필요해요</label>
+        <button class="primary" id="saveCheckin" type="button">기록 저장</button>
+      </div>
+    </section>
+
+    <section class="panel alt role-section" id="lounge" data-section-role="student">
+      <div class="section-head">
+        <p class="eyebrow">Multilingual Lounge</p>
+        <h2>다국어 학생 소통 라운지</h2>
+        <p>학생들이 각자의 언어로 말하고, 번역 보조 문구와 문화 질문을 통해 서로를 이해하도록 설계했습니다.</p>
+      </div>
+      <div class="lounge-layout">
+        <div class="chat-card">
+          <div class="chat-tabs" aria-label="언어 필터">
+            <button class="active" type="button" data-filter="all">전체</button>
+            <button type="button" data-filter="베트남어">베트남어</button>
+            <button type="button" data-filter="중국어">중국어</button>
+            <button type="button" data-filter="영어">영어</button>
+            <button type="button" data-filter="몽골어">몽골어</button>
+          </div>
+          <div class="messages" id="messages" aria-live="polite"></div>
+          <div class="composer">
+            <select id="messageLang" aria-label="메시지 언어">
+              <option>한국어</option><option>베트남어</option><option>중국어</option><option>영어</option><option>몽골어</option><option>필리핀어</option>
+            </select>
+            <input id="messageInput" placeholder="친구들에게 인사하거나 궁금한 점을 적어 보세요" />
+            <button class="primary" id="sendMessage" type="button">보내기</button>
+          </div>
+        </div>
+        <aside class="culture-card">
+          <h3>문화 질문 카드</h3>
+          <p id="cultureQuestion">우리 학교 급식 시간에는 어떻게 줄을 서면 좋을까요?</p>
+          <button class="secondary" id="nextQuestion" type="button">다른 질문 보기</button>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel role-section" id="teacher" data-section-role="teacher">
+      <div class="section-head">
+        <p class="eyebrow">Teacher Dashboard</p>
+        <h2>교사 관리창</h2>
+        <p>도움 요청, 학생 상태, 언어권, 상담 메모, 다국어 공지를 빠르게 관리합니다.</p>
+      </div>
+      <div class="dashboard">
+        <div class="stat"><strong id="statStudents">24</strong><span>등록 학생</span></div>
+        <div class="stat urgent"><strong id="statHelp">3</strong><span>도움 요청</span></div>
+        <div class="stat"><strong>6</strong><span>사용 언어</span></div>
+        <div class="stat"><strong id="statCheckin">82%</strong><span>이번 주 체크인</span></div>
+      </div>
+      <div class="teacher-grid">
+        <article class="table-card">
+          <h3>학생 관리</h3>
+          <table>
+            <thead><tr><th>이름</th><th>모국어</th><th>상태</th><th>관리</th></tr></thead>
+            <tbody id="studentTable"></tbody>
+          </table>
+        </article>
+        <article class="notice-card">
+          <h3>다국어 공지 작성</h3>
+          <input id="noticeTitle" placeholder="공지 제목" />
+          <textarea id="noticeBody" placeholder="공지 내용을 입력하면 학부모와 학생에게 보낼 쉬운 한국어, 영어, 베트남어 예시 문구를 만듭니다."></textarea>
+          <button class="primary" id="makeNotice" type="button">번역 공지 미리보기</button>
+          <pre id="noticePreview">공지 미리보기가 여기에 표시됩니다.</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel alt role-section" id="ai-docs" data-section-role="teacher">
+      <div class="section-head">
+        <p class="eyebrow">AI Administrative Assistant</p>
+        <h2>AI 행정 문서 생성</h2>
+        <p>한글 문서 분석 흐름을 고려한 프로토타입입니다. 업무명, 일정, 대상, 핵심 내용을 넣으면 행정 문서 초안을 생성합니다.</p>
+      </div>
+      <div class="ai-workbench">
+        <div class="form-card">
+          <label>기존 한글 문서 업로드<input type="file" id="hwpFile" accept=".hwp,.hwpx,.docx,.txt" /></label>
+          <label>업무 종류<select id="docType"><option>가정통신문</option><option>상담 계획서</option><option>체험학습 안내문</option><option>다문화 학생 지원 계획</option><option>학부모 면담 안내</option></select></label>
+          <label>일정<input type="date" id="docDate" /></label>
+          <label>대상 학급<input id="docTarget" placeholder="예: 3학년 2반 이주 배경학생 및 학부모" /></label>
+          <label>핵심 내용<textarea id="docPrompt" placeholder="교사가 원하는 업무 내용, 준비물, 장소, 유의사항 등을 입력하세요."></textarea></label>
+          <button class="primary full" id="generateDoc" type="button">AI 문서 초안 생성</button>
+        </div>
+        <article class="doc-output">
+          <div class="doc-toolbar"><h3>생성 문서 초안</h3><button class="secondary" id="copyDoc" type="button">복사</button></div>
+          <pre id="docResult">문서 초안이 여기에 표시됩니다.</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel database-panel role-section" id="database" data-section-role="teacher">
+      <div class="section-head">
+        <p class="eyebrow">Firebase Ready</p>
+        <h2>데이터베이스 연결 설계</h2>
+        <p>Firebase 설정값을 넣으면 로그인 계정, 체크인, 메시지, 문서 초안을 Firestore 컬렉션으로 관리합니다.</p>
+      </div>
+      <div class="schema-grid">
+        <code>accounts/{loginId}</code><code>students/{studentId}</code><code>checkins/{checkinId}</code><code>messages/{messageId}</code><code>documents/{documentId}</code>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-only">
+    <strong>하루온</strong> · 이주 배경학생 지원 홈페이지 프로토타입 · Firebase 연동 준비 버전
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
