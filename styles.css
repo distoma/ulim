@@ -114,10 +114,23 @@ code { font-family: "Cascadia Mono", Consolas, monospace; }
   font-weight: 900;
 }
 .brand strong { display: block; font-size: 18px; }
+.brand em { color: var(--green); font-style: normal; letter-spacing: .02em; }
 .brand small { display: block; color: var(--muted); font-size: 12px; }
 .top-nav { display: flex; gap: 18px; color: var(--muted); font-weight: 800; }
 .top-nav a:hover { color: var(--green); }
 .user-tools { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 800; }
+.language-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.language-control select {
+  width: auto;
+  min-width: 118px;
+  padding: 9px 10px;
+  font-weight: 800;
+}
 
 .primary, .secondary, .ghost {
   display: inline-flex;
@@ -277,6 +290,8 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
   .login-card { padding: 22px; }
   .site-header { padding: 12px 16px; }
   .brand small, .user-tools span { display: none; }
+  .language-control { font-size: 12px; }
+  .language-control select { min-width: 92px; max-width: 104px; }
   .hero { padding: 38px 16px 24px; }
   .panel { margin: 22px 0; padding: 24px 16px; border-left: 0; border-right: 0; }
   .support-grid, .dashboard, .schema-grid { grid-template-columns: 1fr; }

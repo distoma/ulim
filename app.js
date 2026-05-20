@@ -24,10 +24,82 @@ const firebaseConfig = {
 };
 
 const STORAGE_KEYS = {
-  session: "haruOn.session",
-  checkins: "haruOn.checkins",
-  messages: "haruOn.messages",
-  documents: "haruOn.documents"
+  session: "ulim.session",
+  checkins: "ulim.checkins",
+  messages: "ulim.messages",
+  documents: "ulim.documents"
+};
+
+const languageNames = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  zh: "中文",
+  vi: "Tiếng Việt",
+  th: "ไทย",
+  mn: "Монгол",
+  ru: "Русский"
+};
+
+const languageAliases = {
+  한국어: "ko",
+  영어: "en",
+  English: "en",
+  일본어: "ja",
+  "日本語": "ja",
+  중국어: "zh",
+  "中文": "zh",
+  베트남어: "vi",
+  "Tiếng Việt": "vi",
+  태국어: "th",
+  "ไทย": "th",
+  몽골어: "mn",
+  "Монгол": "mn",
+  러시아어: "ru",
+  "Русский": "ru"
+};
+
+const menuTranslations = {
+  student: {
+    ko: "학생 도움",
+    en: "Student Help",
+    ja: "学生サポート",
+    zh: "学生帮助",
+    vi: "Hỗ trợ học sinh",
+    th: "ความช่วยเหลือนักเรียน",
+    mn: "Сурагчийн тусламж",
+    ru: "Помощь ученику"
+  },
+  lounge: {
+    ko: "다국어 대화",
+    en: "Multilingual Chat",
+    ja: "多言語会話",
+    zh: "多语言交流",
+    vi: "Trò chuyện đa ngôn ngữ",
+    th: "สนทนาหลายภาษา",
+    mn: "Олон хэлний яриа",
+    ru: "Многоязычное общение"
+  },
+  teacher: {
+    ko: "교사 관리",
+    en: "Teacher Dashboard",
+    ja: "教師管理",
+    zh: "教师管理",
+    vi: "Quản lý giáo viên",
+    th: "จัดการครู",
+    mn: "Багшийн удирдлага",
+    ru: "Панель учителя"
+  },
+  aiDocs: {
+    ko: "AI 행정",
+    en: "AI Admin",
+    ja: "AI事務",
+    zh: "AI行政",
+    vi: "Hành chính AI",
+    th: "งานเอกสาร AI",
+    mn: "AI захиргаа",
+    ru: "AI-документы"
+  }
 };
 
 const demoAccounts = {
@@ -85,6 +157,25 @@ function showToast(text) {
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2600);
 }
+
+function normalizeLanguage(value) {
+  return languageNames[value] ? value : languageAliases[value] || "ko";
+}
+
+function formatBilingual(menuKey, languageCode) {
+  const korean = menuTranslations[menuKey].ko;
+  const translated = menuTranslations[menuKey][languageCode] || korean;
+  return languageCode === "ko" ? korean : `${translated} / ${korean}`;
+}
+
+function applyMenuLanguage(languageCode = "ko") {
+  const normalized = normalizeLanguage(languageCode);
+  $$("[data-menu-key]").forEach((item) => {
+    item.textContent = formatBilingual(item.dataset.menuKey, normalized);
+  });
+  const appLanguage = $("#appLanguage");
+  if (appLanguage) appLanguage.value = normalized;
+}
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -98,13 +189,25 @@ async function loginWithFirebase(loginId, password, role) {
   const account = snap.data();
   const passwordHash = await sha256(password);
   if (account.passwordHash !== passwordHash || account.role !== role || account.active === false) return null;
-  return { loginId, role: account.role, name: account.name || loginId, language: account.language || "한국어" };
+  return {
+    loginId,
+    role: account.role,
+    name: account.name || loginId,
+    language: account.language || "한국어",
+    languageCode: normalizeLanguage(account.language || "ko")
+  };
 }
 
 async function loginWithDemo(loginId, password, role) {
   const account = demoAccounts[loginId];
   if (!account || account.password !== password || account.role !== role) return null;
-  return { loginId: account.loginId, role: account.role, name: account.name, language: account.language };
+  return {
+    loginId: account.loginId,
+    role: account.role,
+    name: account.name,
+    language: account.language,
+    languageCode: normalizeLanguage(account.language)
+  };
 }
 
 async function handleLogin(event) {
@@ -113,6 +216,7 @@ async function handleLogin(event) {
   const role = new FormData(form).get("role");
   const loginId = $("#loginId").value.trim();
   const password = $("#loginPassword").value;
+  const languageCode = $("#loginLanguage").value;
 
   try {
     let user = null;
@@ -126,6 +230,8 @@ async function handleLogin(event) {
       showToast("아이디, 비밀번호, 역할이 일치하지 않습니다.");
       return;
     }
+    user.languageCode = normalizeLanguage(languageCode || user.languageCode || user.language);
+    user.language = languageNames[user.languageCode];
     currentUser = user;
     saveJson(STORAGE_KEYS.session, user);
     await enterApp(user);
@@ -136,11 +242,14 @@ async function handleLogin(event) {
 }
 
 async function enterApp(user) {
+  user.languageCode = normalizeLanguage(user.languageCode || user.language);
+  user.language = languageNames[user.languageCode];
   document.body.classList.remove("logged-out");
   document.body.classList.add("logged-in");
   $("#currentUserLabel").textContent = `${user.name} (${user.role === "teacher" ? "교사" : "학생"})`;
   $("#roleSubtitle").textContent = user.role === "teacher" ? "교사용 관리 화면" : "학생용 도움 화면";
   applyRoleView(user.role);
+  applyMenuLanguage(user.languageCode);
   await refreshFirebaseData();
   renderHero(user.role);
   renderMoods();
@@ -327,6 +436,16 @@ function setupFilters() {
 function setupEvents() {
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#logoutBtn").addEventListener("click", logout);
+  $("#appLanguage").addEventListener("change", (event) => {
+    const languageCode = normalizeLanguage(event.target.value);
+    applyMenuLanguage(languageCode);
+    if (currentUser) {
+      currentUser.languageCode = languageCode;
+      currentUser.language = languageNames[languageCode];
+      saveJson(STORAGE_KEYS.session, currentUser);
+    }
+    showToast(`${languageNames[languageCode]} 메뉴로 바뀌었습니다.`);
+  });
   $("#saveCheckin").addEventListener("click", saveCheckin);
   $("#sendMessage").addEventListener("click", sendMessage);
   $("#messageInput").addEventListener("keydown", (event) => { if (event.key === "Enter") sendMessage(); });
