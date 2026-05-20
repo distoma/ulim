@@ -115,9 +115,13 @@ async function handleLogin(event) {
   const password = $("#loginPassword").value;
 
   try {
-    const user = firebaseAvailable
-      ? await loginWithFirebase(loginId, password, role)
-      : await loginWithDemo(loginId, password, role);
+    let user = null;
+    if (firebaseAvailable) {
+      user = await loginWithFirebase(loginId, password, role);
+      if (!user) user = await loginWithDemo(loginId, password, role);
+    } else {
+      user = await loginWithDemo(loginId, password, role);
+    }
     if (!user) {
       showToast("아이디, 비밀번호, 역할이 일치하지 않습니다.");
       return;
