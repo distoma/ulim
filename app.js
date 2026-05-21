@@ -9,6 +9,8 @@ let serverTimestamp;
 let query;
 let orderBy;
 let limit;
+let getFunctions;
+let httpsCallable;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -22,6 +24,9 @@ const firebaseConfig = {
   messagingSenderId: "514608952885",
   appId: "1:514608952885:web:5129ce38df7ec5d20f637c"
 };
+
+const translationFunctionRegion = "asia-northeast3";
+const translationFunctionName = "translateMessage";
 
 const STORAGE_KEYS = {
   session: "ulim.session",
@@ -178,14 +183,19 @@ let selectedMood = moods[2];
 let activeFilter = "all";
 let students = [...defaultStudents];
 let firebaseAvailable = false;
+let functionsClient = null;
+let translateMessageCallable = null;
 
 const firebaseReady = Object.values(firebaseConfig).every(Boolean);
 async function setupFirebase() {
   if (!firebaseReady) return;
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"));
   ({ getFirestore, doc, getDoc, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"));
+  ({ getFunctions, httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js"));
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  functionsClient = getFunctions(app, translationFunctionRegion);
+  translateMessageCallable = httpsCallable(functionsClient, translationFunctionName);
   firebaseAvailable = true;
   $("#firebaseStatus").textContent = "Firebase Firestore 로그인으로 연결되어 있습니다.";
 }
@@ -247,6 +257,26 @@ function buildTranslationBundle(text, sourceCode) {
     code,
     code === normalizedSource ? text : `[${languageNames[code]} 자동 번역 준비 중] ${text}`
   ]));
+}
+
+async function translateMessageText(text, sourceCode) {
+  const fallback = buildTranslationBundle(text, sourceCode);
+  if (!translateMessageCallable) return fallback;
+
+  try {
+    const result = await translateMessageCallable({
+      text,
+      sourceLang: normalizeLanguage(sourceCode),
+      targetLangs: Object.keys(languageNames)
+    });
+    const translations = result.data?.translations;
+    if (!translations || typeof translations !== "object") return fallback;
+    return { ...fallback, ...translations, [normalizeLanguage(sourceCode)]: text };
+  } catch (error) {
+    console.warn("Translation function failed. Falling back to local placeholder.", error);
+    showToast("번역 서버 연결 전이라 임시 번역 안내로 표시합니다.");
+    return fallback;
+  }
 }
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text);
@@ -463,21 +493,30 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return showToast("메시지를 먼저 입력해 주세요.");
   const sourceLangCode = normalizeLanguage($("#messageLang").value);
-  const message = {
-    name: currentUser?.name || "나",
-    lang: languageKoreanNames[sourceLangCode],
-    sourceLangCode,
-    text,
-    translations: buildTranslationBundle(text, sourceLangCode),
-    createdAt: new Date().toISOString()
-  };
-  const messages = getMessages();
-  messages.push(message);
-  saveJson(STORAGE_KEYS.messages, messages);
-  if (firebaseAvailable) await addDoc(collection(db, "messages"), { ...message, createdAt: serverTimestamp() });
-  input.value = "";
-  renderMessages();
-  showToast("라운지에 메시지를 보냈습니다.");
+  const sendButton = $("#sendMessage");
+  sendButton.disabled = true;
+  sendButton.textContent = "번역 중";
+  try {
+    const translations = await translateMessageText(text, sourceLangCode);
+    const message = {
+      name: currentUser?.name || "나",
+      lang: languageKoreanNames[sourceLangCode],
+      sourceLangCode,
+      text,
+      translations,
+      createdAt: new Date().toISOString()
+    };
+    const messages = getMessages();
+    messages.push(message);
+    saveJson(STORAGE_KEYS.messages, messages);
+    if (firebaseAvailable) await addDoc(collection(db, "messages"), { ...message, createdAt: serverTimestamp() });
+    input.value = "";
+    renderMessages();
+    showToast("라운지에 메시지를 보냈습니다.");
+  } finally {
+    sendButton.disabled = false;
+    sendButton.textContent = "보내기";
+  }
 }
 
 function makeNotice() {

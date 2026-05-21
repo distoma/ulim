@@ -22,6 +22,41 @@
 - 체크인, 메시지, 행정 문서 초안을 Firebase Firestore 또는 `localStorage`에 저장
 - Firebase 설정 전에도 발표와 시연이 가능한 체험 계정 제공
 
+## 자동 번역을 위해 준비할 부분
+
+사용자가 준비해야 하는 부분:
+
+- Google Cloud Console에서 Cloud Translation API를 사용 설정합니다.
+- Firebase Blaze 요금제를 사용 설정합니다. Cloud Functions와 Translation API는 결제 계정 연결이 필요할 수 있습니다.
+- Firebase Functions를 `asia-northeast3` 리전에 배포합니다.
+- 함수 이름은 홈페이지 코드와 맞게 `translateMessage`로 만듭니다.
+- 번역 API 키나 서비스 계정 키는 절대로 `app.js`에 넣지 말고 Cloud Functions 서버 안에서만 사용합니다.
+
+홈페이지에 반영된 부분:
+
+- `app.js`가 Firebase Functions SDK를 불러오도록 수정되었습니다.
+- 메시지를 보낼 때 `translateMessage` callable function을 호출합니다.
+- 함수가 `translations` 객체를 반환하면 Firestore `messages` 문서에 함께 저장합니다.
+- 접속 학생의 모국어 코드에 맞춰 `translations[languageCode]`를 먼저 보여줍니다.
+- 아직 Cloud Function이 배포되지 않았거나 실패하면 기존처럼 임시 안내 문구와 원문을 보여줍니다.
+
+`translateMessage` 함수는 아래 형태로 응답해야 합니다.
+
+```json
+{
+  "translations": {
+    "ko": "한국어 번역",
+    "en": "English translation",
+    "ja": "日本語翻訳",
+    "zh": "中文翻译",
+    "vi": "Bản dịch tiếng Việt",
+    "th": "คำแปลภาษาไทย",
+    "mn": "Монгол орчуулга",
+    "ru": "Русский перевод"
+  }
+}
+```
+
 ## Firebase 설정 방법
 
 ### 1. Firebase 프로젝트 만들기
