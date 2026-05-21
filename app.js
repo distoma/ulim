@@ -41,6 +41,17 @@ const languageNames = {
   ru: "Русский"
 };
 
+const languageKoreanNames = {
+  ko: "한국어",
+  en: "영어",
+  ja: "일본어",
+  zh: "중국어",
+  vi: "베트남어",
+  th: "태국어",
+  mn: "몽골어",
+  ru: "러시아어"
+};
+
 const languageAliases = {
   한국어: "ko",
   영어: "en",
@@ -109,10 +120,43 @@ const demoAccounts = {
 
 const moods = ["매우 좋아요", "좋아요", "보통이에요", "걱정돼요", "힘들어요", "도움 필요"];
 const defaultMessages = [
-  { name: "린", lang: "베트남어", text: "오늘 급식 메뉴를 알려 줄 수 있나요?", original: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
-  { name: "민수", lang: "한국어", text: "방과후 교실은 2층 도서실 옆에서 시작해요.", original: "" },
-  { name: "Sara", lang: "영어", text: "내일 동아리 활동 준비물이 궁금해요.", original: "What should I bring for tomorrow's club activity?" }
+  { name: "린", lang: "베트남어", sourceLangCode: "vi", text: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
+  { name: "민수", lang: "한국어", sourceLangCode: "ko", text: "방과후 교실은 2층 도서실 옆에서 시작해요." },
+  { name: "Sara", lang: "영어", sourceLangCode: "en", text: "What should I bring for tomorrow's club activity?" }
 ];
+
+const translationMemory = {
+  "Bạn có thể cho mình biết thực đơn hôm nay không?": {
+    ko: "오늘 급식 메뉴를 알려 줄 수 있나요?",
+    en: "Can you tell me today's lunch menu?",
+    ja: "今日の給食メニューを教えてくれますか。",
+    zh: "可以告诉我今天的午餐菜单吗？",
+    vi: "Bạn có thể cho mình biết thực đơn hôm nay không?",
+    th: "ช่วยบอกเมนูอาหารกลางวันวันนี้ให้ฉันได้ไหม",
+    mn: "Өнөөдрийн өдрийн хоолны цэсийг хэлж өгч болох уу?",
+    ru: "Можешь сказать, что сегодня на обед?"
+  },
+  "방과후 교실은 2층 도서실 옆에서 시작해요.": {
+    ko: "방과후 교실은 2층 도서실 옆에서 시작해요.",
+    en: "The after-school class starts next to the library on the second floor.",
+    ja: "放課後教室は2階の図書室の隣で始まります。",
+    zh: "课后教室在二楼图书室旁边开始。",
+    vi: "Lớp sau giờ học bắt đầu cạnh thư viện ở tầng 2.",
+    th: "ห้องเรียนหลังเลิกเรียนเริ่มที่ข้างห้องสมุดชั้น 2",
+    mn: "Хичээлийн дараах анги 2 давхрын номын сангийн хажууд эхэлнэ.",
+    ru: "Занятие после уроков начинается рядом с библиотекой на втором этаже."
+  },
+  "What should I bring for tomorrow's club activity?": {
+    ko: "내일 동아리 활동 준비물이 궁금해요.",
+    en: "What should I bring for tomorrow's club activity?",
+    ja: "明日のクラブ活動には何を持って行けばいいですか。",
+    zh: "明天社团活动需要带什么？",
+    vi: "Ngày mai sinh hoạt câu lạc bộ cần mang gì?",
+    th: "กิจกรรมชมรมพรุ่งนี้ต้องเตรียมอะไรไปบ้าง",
+    mn: "Маргаашийн дугуйлангийн үйл ажиллагаанд юу авчрах вэ?",
+    ru: "Что нужно принести на завтрашнее занятие кружка?"
+  }
+};
 const defaultStudents = [
   { name: "린", lang: "베트남어", status: "도움 요청", note: "급식 적응 상담 필요" },
   { name: "샤오", lang: "중국어", status: "관찰 필요", note: "또래 관계 확인" },
@@ -175,6 +219,34 @@ function applyMenuLanguage(languageCode = "ko") {
   });
   const appLanguage = $("#appLanguage");
   if (appLanguage) appLanguage.value = normalized;
+  renderMessages();
+}
+
+function getViewerLanguageCode() {
+  return normalizeLanguage(currentUser?.languageCode || $("#loginLanguage")?.value || "ko");
+}
+
+function getMessageSourceCode(message) {
+  return normalizeLanguage(message.sourceLangCode || message.lang || "ko");
+}
+
+function getMessageTranslation(message, targetCode) {
+  const normalizedTarget = normalizeLanguage(targetCode);
+  const sourceText = message.text || "";
+  if (message.translations?.[normalizedTarget]) return message.translations[normalizedTarget];
+  if (translationMemory[sourceText]?.[normalizedTarget]) return translationMemory[sourceText][normalizedTarget];
+  if (getMessageSourceCode(message) === normalizedTarget) return sourceText;
+  return `[${languageNames[normalizedTarget]} 자동 번역 준비 중] ${sourceText}`;
+}
+
+function buildTranslationBundle(text, sourceCode) {
+  const normalizedSource = normalizeLanguage(sourceCode);
+  const known = translationMemory[text];
+  if (known) return known;
+  return Object.fromEntries(Object.keys(languageNames).map((code) => [
+    code,
+    code === normalizedSource ? text : `[${languageNames[code]} 자동 번역 준비 중] ${text}`
+  ]));
 }
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text);
@@ -321,12 +393,22 @@ function getMessages() { return loadJson(STORAGE_KEYS.messages, defaultMessages)
 function renderMessages() {
   const box = $("#messages");
   if (!box) return;
+  const viewerLanguageCode = getViewerLanguageCode();
   const messages = getMessages().filter((message) => activeFilter === "all" || message.lang === activeFilter);
   box.innerHTML = "";
   messages.forEach((message) => {
+    const sourceCode = getMessageSourceCode(message);
+    const translatedText = getMessageTranslation(message, viewerLanguageCode);
+    const sourceLabel = languageNames[sourceCode] || message.lang || "원문";
+    const viewerLabel = languageNames[viewerLanguageCode] || "한국어";
+    const sameLanguage = sourceCode === viewerLanguageCode;
     const item = document.createElement("article");
     item.className = "msg";
-    item.innerHTML = `<strong>${message.name}<small>${message.lang}</small></strong><p>${message.text}</p>${message.original ? `<small>원문 또는 번역 참고: ${message.original}</small>` : ""}`;
+    item.innerHTML = `
+      <strong>${message.name}<small>${sourceLabel}</small></strong>
+      <p>${translatedText}</p>
+      <small>${sameLanguage ? "내 모국어로 작성된 글입니다." : `${viewerLabel} 번역 / 원문(${sourceLabel}): ${message.text}`}</small>
+    `;
     box.appendChild(item);
   });
   box.scrollTop = box.scrollHeight;
@@ -380,7 +462,15 @@ async function sendMessage() {
   const input = $("#messageInput");
   const text = input.value.trim();
   if (!text) return showToast("메시지를 먼저 입력해 주세요.");
-  const message = { name: currentUser?.name || "나", lang: $("#messageLang").value, text, original: "번역 API 연결 전 예시입니다.", createdAt: new Date().toISOString() };
+  const sourceLangCode = normalizeLanguage($("#messageLang").value);
+  const message = {
+    name: currentUser?.name || "나",
+    lang: languageKoreanNames[sourceLangCode],
+    sourceLangCode,
+    text,
+    translations: buildTranslationBundle(text, sourceLangCode),
+    createdAt: new Date().toISOString()
+  };
   const messages = getMessages();
   messages.push(message);
   saveJson(STORAGE_KEYS.messages, messages);
