@@ -252,6 +252,7 @@ th { color: var(--muted); font-size: 13px; }
 .tag { display: inline-block; padding: 6px 10px; border-radius: var(--radius); background: var(--green-soft); color: var(--green); font-weight: 900; font-size: 12px; }
 .tag.danger { background: #fff0ed; color: #c84934; }
 .notice-card { display: grid; gap: 12px; align-content: start; }
+.checkin-records { grid-column: 1 / -1; }
 
 .form-card { display: grid; gap: 14px; align-content: start; }
 .form-card label { display: grid; gap: 8px; font-weight: 900; }

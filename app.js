@@ -123,7 +123,127 @@ const demoAccounts = {
   teacher01: { loginId: "teacher01", password: "1234", role: "teacher", name: "교사 체험", language: "한국어" }
 };
 
-const moods = ["매우 좋아요", "좋아요", "보통이에요", "걱정돼요", "힘들어요", "도움 필요"];
+const moods = [
+  {
+    key: "great",
+    ko: "매우 좋아요",
+    en: "Very good",
+    ja: "とても良い",
+    zh: "非常好",
+    vi: "Rất tốt",
+    th: "ดีมาก",
+    mn: "Маш сайн",
+    ru: "Очень хорошо"
+  },
+  {
+    key: "good",
+    ko: "좋아요",
+    en: "Good",
+    ja: "良い",
+    zh: "好",
+    vi: "Tốt",
+    th: "ดี",
+    mn: "Сайн",
+    ru: "Хорошо"
+  },
+  {
+    key: "okay",
+    ko: "보통이에요",
+    en: "Okay",
+    ja: "普通です",
+    zh: "一般",
+    vi: "Bình thường",
+    th: "ปกติ",
+    mn: "Дунд зэрэг",
+    ru: "Нормально"
+  },
+  {
+    key: "worried",
+    ko: "걱정돼요",
+    en: "Worried",
+    ja: "心配です",
+    zh: "担心",
+    vi: "Lo lắng",
+    th: "กังวล",
+    mn: "Санаа зовж байна",
+    ru: "Тревожно"
+  },
+  {
+    key: "hard",
+    ko: "힘들어요",
+    en: "Having a hard time",
+    ja: "つらいです",
+    zh: "很辛苦",
+    vi: "Khó khăn",
+    th: "ลำบาก",
+    mn: "Хэцүү байна",
+    ru: "Тяжело"
+  },
+  {
+    key: "needHelp",
+    ko: "도움 필요",
+    en: "Need help",
+    ja: "助けが必要",
+    zh: "需要帮助",
+    vi: "Cần giúp đỡ",
+    th: "ต้องการความช่วยเหลือ",
+    mn: "Тусламж хэрэгтэй",
+    ru: "Нужна помощь"
+  }
+];
+
+const checkinTextTranslations = {
+  title: {
+    ko: "오늘 체크인",
+    en: "Today's Check-in",
+    ja: "今日のチェックイン",
+    zh: "今日签到",
+    vi: "Điểm danh cảm xúc hôm nay",
+    th: "เช็กอินวันนี้",
+    mn: "Өнөөдрийн тэмдэглэл",
+    ru: "Сегодняшняя отметка"
+  },
+  guide: {
+    ko: "오늘의 마음과 필요한 도움을 모국어로 남길 수 있습니다.",
+    en: "You can write today's feelings and help requests in your home language.",
+    ja: "今日の気持ちや必要な助けを母語で書けます。",
+    zh: "可以用母语写下今天的心情和需要的帮助。",
+    vi: "Em có thể viết cảm xúc và điều cần giúp bằng tiếng mẹ đẻ.",
+    th: "เขียนความรู้สึกและสิ่งที่ต้องการความช่วยเหลือเป็นภาษาแม่ได้",
+    mn: "Өнөөдрийн сэтгэл болон хэрэгтэй тусламжаа эх хэлээрээ бичиж болно.",
+    ru: "Можно написать о чувствах и нужной помощи на родном языке."
+  },
+  placeholder: {
+    ko: "오늘 좋았던 일, 어려웠던 일, 궁금한 점을 적어 보세요. 모국어로 써도 괜찮아요.",
+    en: "Write what was good, hard, or confusing today. You may write in your home language.",
+    ja: "今日よかったこと、難しかったこと、知りたいことを書いてください。母語で書いても大丈夫です。",
+    zh: "写下今天开心、困难或想知道的事。可以用母语写。",
+    vi: "Hãy viết điều vui, điều khó hoặc điều em thắc mắc hôm nay. Em có thể viết bằng tiếng mẹ đẻ.",
+    th: "เขียนสิ่งที่ดี สิ่งที่ยาก หรือสิ่งที่สงสัยวันนี้ จะเขียนเป็นภาษาแม่ก็ได้",
+    mn: "Өнөөдөр сайн байсан, хэцүү байсан, эсвэл асуух зүйлээ бичээрэй. Эх хэлээрээ бичиж болно.",
+    ru: "Напиши, что сегодня было хорошим, трудным или непонятным. Можно писать на родном языке."
+  },
+  help: {
+    ko: "선생님 도움이 필요해요",
+    en: "I need help from my teacher",
+    ja: "先生の助けが必要です",
+    zh: "我需要老师帮助",
+    vi: "Em cần thầy cô giúp đỡ",
+    th: "ฉันต้องการความช่วยเหลือจากครู",
+    mn: "Багшаас тусламж хэрэгтэй",
+    ru: "Мне нужна помощь учителя"
+  },
+  save: {
+    ko: "기록 저장",
+    en: "Save record",
+    ja: "記録を保存",
+    zh: "保存记录",
+    vi: "Lưu ghi chép",
+    th: "บันทึก",
+    mn: "Тэмдэглэл хадгалах",
+    ru: "Сохранить запись"
+  }
+};
 const defaultMessages = [
   { name: "린", lang: "베트남어", sourceLangCode: "vi", text: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
   { name: "민수", lang: "한국어", sourceLangCode: "ko", text: "방과후 교실은 2층 도서실 옆에서 시작해요." },
@@ -179,9 +299,10 @@ const cultureQuestions = [
 
 let db = null;
 let currentUser = null;
-let selectedMood = moods[2];
+let selectedMood = moods[2].key;
 let activeFilter = "all";
 let students = [...defaultStudents];
+let recentCheckins = [];
 let firebaseAvailable = false;
 let functionsClient = null;
 let translateMessageCallable = null;
@@ -222,6 +343,17 @@ function formatBilingual(menuKey, languageCode) {
   return languageCode === "ko" ? korean : `${translated} / ${korean}`;
 }
 
+function formatBilingualValue(translations, languageCode) {
+  const normalized = normalizeLanguage(languageCode);
+  const korean = translations.ko;
+  const translated = translations[normalized] || korean;
+  return normalized === "ko" ? korean : `${translated} / ${korean}`;
+}
+
+function getMoodByKey(key) {
+  return moods.find((mood) => mood.key === key || mood.ko === key) || moods[2];
+}
+
 function applyMenuLanguage(languageCode = "ko") {
   const normalized = normalizeLanguage(languageCode);
   $$("[data-menu-key]").forEach((item) => {
@@ -229,7 +361,18 @@ function applyMenuLanguage(languageCode = "ko") {
   });
   const appLanguage = $("#appLanguage");
   if (appLanguage) appLanguage.value = normalized;
+  applyCheckinLanguage(normalized);
   renderMessages();
+}
+
+function applyCheckinLanguage(languageCode = "ko") {
+  const normalized = normalizeLanguage(languageCode);
+  $("#checkinTitle").textContent = formatBilingualValue(checkinTextTranslations.title, normalized);
+  $("#checkinGuide").textContent = formatBilingualValue(checkinTextTranslations.guide, normalized);
+  $("#checkinText").placeholder = formatBilingualValue(checkinTextTranslations.placeholder, normalized);
+  $("#helpCheckLabel").textContent = formatBilingualValue(checkinTextTranslations.help, normalized);
+  $("#saveCheckin").textContent = formatBilingualValue(checkinTextTranslations.save, normalized);
+  renderMoods();
 }
 
 function getViewerLanguageCode() {
@@ -357,6 +500,7 @@ async function enterApp(user) {
   renderMoods();
   renderMessages();
   renderStudents();
+  renderTeacherCheckins();
   updateStats();
   location.hash = user.role === "teacher" ? "#teacher" : "#student";
 }
@@ -398,6 +542,11 @@ async function refreshFirebaseData() {
   if (currentUser.role === "teacher") {
     const studentSnap = await getDocs(collection(db, "students"));
     if (!studentSnap.empty) students = studentSnap.docs.map((item) => item.data());
+    const checkinSnap = await getDocs(query(collection(db, "checkins"), orderBy("createdAt", "desc"), limit(30)));
+    if (!checkinSnap.empty) {
+      recentCheckins = checkinSnap.docs.map((item) => item.data());
+      saveJson(STORAGE_KEYS.checkins, recentCheckins);
+    }
   }
   const messageSnap = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(30)));
   if (!messageSnap.empty) {
@@ -409,12 +558,13 @@ async function refreshFirebaseData() {
 function renderMoods() {
   const row = $("#moodRow");
   row.innerHTML = "";
+  const languageCode = getViewerLanguageCode();
   moods.forEach((mood) => {
     const button = document.createElement("button");
-    button.className = `mood${mood === selectedMood ? " selected" : ""}`;
+    button.className = `mood${mood.key === selectedMood ? " selected" : ""}`;
     button.type = "button";
-    button.textContent = mood;
-    button.addEventListener("click", () => { selectedMood = mood; renderMoods(); });
+    button.textContent = formatBilingualValue(mood, languageCode);
+    button.addEventListener("click", () => { selectedMood = mood.key; renderMoods(); });
     row.appendChild(button);
   });
 }
@@ -461,8 +611,36 @@ function renderStudents() {
   });
 }
 
+function getCheckins() {
+  return recentCheckins.length ? recentCheckins : loadJson(STORAGE_KEYS.checkins, []);
+}
+
+function renderTeacherCheckins() {
+  const tbody = $("#teacherCheckinTable");
+  if (!tbody) return;
+  const checkins = getCheckins().slice(0, 20);
+  tbody.innerHTML = "";
+  if (!checkins.length) {
+    tbody.innerHTML = `<tr><td colspan="4">아직 저장된 체크인 기록이 없습니다.</td></tr>`;
+    return;
+  }
+  checkins.forEach((checkin) => {
+    const mood = getMoodByKey(checkin.moodKey || checkin.mood);
+    const koreanText = checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음";
+    const helpText = checkin.help ? "도움 요청" : "일반 기록";
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${checkin.studentName || checkin.studentId || "학생"}</td>
+      <td>${mood.ko}</td>
+      <td>${koreanText}</td>
+      <td><span class="tag ${checkin.help ? "danger" : ""}">${helpText}</span></td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
 function updateStats() {
-  const checkins = loadJson(STORAGE_KEYS.checkins, []);
+  const checkins = getCheckins();
   const helpCount = students.filter((student) => student.status?.includes("도움")).length + checkins.filter((item) => item.help).length;
   $("#statStudents").textContent = students.length;
   $("#statHelp").textContent = helpCount;
@@ -470,22 +648,42 @@ function updateStats() {
 }
 
 async function saveCheckin() {
+  const sourceLangCode = getViewerLanguageCode();
+  const text = $("#checkinText").value.trim() || "내용 없음";
+  const saveButton = $("#saveCheckin");
+  saveButton.disabled = true;
+  saveButton.textContent = "저장 중";
+  const translations = await translateMessageText(text, sourceLangCode);
+  const selectedMoodData = getMoodByKey(selectedMood);
   const checkin = {
     studentId: currentUser?.loginId || "demo",
     studentName: currentUser?.name || "체험 학생",
-    mood: selectedMood,
-    text: $("#checkinText").value.trim() || "내용 없음",
+    sourceLangCode,
+    sourceLang: languageKoreanNames[sourceLangCode],
+    moodKey: selectedMood,
+    mood: selectedMoodData.ko,
+    moodOriginal: selectedMoodData[sourceLangCode] || selectedMoodData.ko,
+    text,
+    translations,
+    koreanText: translations.ko || text,
     help: $("#helpCheck").checked,
     createdAt: new Date().toISOString()
   };
-  const checkins = loadJson(STORAGE_KEYS.checkins, []);
-  checkins.push(checkin);
-  saveJson(STORAGE_KEYS.checkins, checkins);
-  if (firebaseAvailable) await addDoc(collection(db, "checkins"), { ...checkin, createdAt: serverTimestamp() });
-  $("#checkinText").value = "";
-  $("#helpCheck").checked = false;
-  updateStats();
-  showToast(checkin.help ? "도움 요청과 체크인이 저장되었습니다." : "오늘 체크인이 저장되었습니다.");
+  try {
+    const checkins = loadJson(STORAGE_KEYS.checkins, []);
+    checkins.unshift(checkin);
+    recentCheckins = checkins;
+    saveJson(STORAGE_KEYS.checkins, checkins);
+    if (firebaseAvailable) await addDoc(collection(db, "checkins"), { ...checkin, createdAt: serverTimestamp() });
+    $("#checkinText").value = "";
+    $("#helpCheck").checked = false;
+    renderTeacherCheckins();
+    updateStats();
+    showToast(checkin.help ? "도움 요청과 체크인이 저장되었습니다." : "오늘 체크인이 저장되었습니다.");
+  } finally {
+    saveButton.disabled = false;
+    applyCheckinLanguage(sourceLangCode);
+  }
 }
 
 async function sendMessage() {
@@ -604,6 +802,7 @@ async function boot() {
   renderMoods();
   renderMessages();
   renderStudents();
+  renderTeacherCheckins();
   updateStats();
   setupFilters();
   setupEvents();
