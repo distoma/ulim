@@ -9,6 +9,7 @@ let serverTimestamp;
 let query;
 let orderBy;
 let limit;
+let updateDoc;
 let getFunctions;
 let httpsCallable;
 const $ = (selector) => document.querySelector(selector);
@@ -306,12 +307,15 @@ let recentCheckins = [];
 let firebaseAvailable = false;
 let functionsClient = null;
 let translateMessageCallable = null;
+let studentLanguageFilter = "all";
+let studentStatusFilter = "all";
+let selectedStudentIds = new Set();
 
 const firebaseReady = Object.values(firebaseConfig).every(Boolean);
 async function setupFirebase() {
   if (!firebaseReady) return;
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"));
-  ({ getFirestore, doc, getDoc, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"));
+  ({ getFirestore, doc, getDoc, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"));
   ({ getFunctions, httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js"));
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
@@ -331,6 +335,15 @@ function showToast(text) {
   toast.textContent = text;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function normalizeLanguage(value) {
@@ -379,6 +392,14 @@ function getViewerLanguageCode() {
   return normalizeLanguage(currentUser?.languageCode || $("#loginLanguage")?.value || "ko");
 }
 
+function getStudentId(student) {
+  return String(student.loginId || student.id || student.studentId || student.name);
+}
+
+function getStudentLanguageCode(student) {
+  return normalizeLanguage(student.languageCode || student.sourceLangCode || student.lang || student.language || "ko");
+}
+
 function getMessageSourceCode(message) {
   return normalizeLanguage(message.sourceLangCode || message.lang || "ko");
 }
@@ -390,6 +411,17 @@ function getMessageTranslation(message, targetCode) {
   if (translationMemory[sourceText]?.[normalizedTarget]) return translationMemory[sourceText][normalizedTarget];
   if (getMessageSourceCode(message) === normalizedTarget) return sourceText;
   return `[${languageNames[normalizedTarget]} 자동 번역 준비 중] ${sourceText}`;
+}
+
+function canViewMessage(message) {
+  if (currentUser?.role !== "student") return true;
+  if (!message.recipients?.length) return true;
+  return message.recipients.includes(currentUser.loginId) || message.recipientNames?.includes(currentUser.name);
+}
+
+function getCheckinTranslation(checkin, targetCode) {
+  const normalizedTarget = normalizeLanguage(targetCode);
+  return checkin.translations?.[normalizedTarget] || checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음";
 }
 
 function buildTranslationBundle(text, sourceCode) {
@@ -500,7 +532,10 @@ async function enterApp(user) {
   renderMoods();
   renderMessages();
   renderStudents();
+  renderStudentFilters();
+  renderRecipientSummary();
   renderTeacherCheckins();
+  renderStudentReplies();
   updateStats();
   location.hash = user.role === "teacher" ? "#teacher" : "#student";
 }
@@ -525,11 +560,11 @@ function renderHero(role) {
   const teacher = role === "teacher";
   $("#heroTitle").textContent = teacher ? "교사 업무와 학생 지원을 한 화면에서 관리합니다." : "오늘의 마음과 궁금한 점을 편안하게 나눠요.";
   $("#heroText").textContent = teacher
-    ? "도움 요청 학생을 먼저 확인하고, 다국어 공지와 행정 문서 초안을 빠르게 준비할 수 있습니다."
+    ? "도움 요청 학생을 먼저 확인하고, 선택한 학생에게 번역 메시지와 행정 문서 초안을 빠르게 준비할 수 있습니다."
     : "모국어로 체크인하고 친구들과 대화하며 학교생활에 필요한 도움을 받을 수 있습니다.";
   $("#quickTitle").textContent = teacher ? "교사용 빠른 작업" : "학생용 빠른 작업";
   const items = teacher
-    ? ["도움 요청 학생 확인", "다국어 공지 작성", "AI 행정 문서 초안 생성"]
+    ? ["도움 요청 학생 확인", "선택 학생에게 메시지 보내기", "AI 행정 문서 초안 생성"]
     : ["기분 체크하고 도움 요청하기", "친구에게 내 언어로 인사하기", "문화 질문 카드로 이야기하기"];
   $("#todayList").innerHTML = items.map((item, index) => `<li><span>${index + 1}</span>${item}</li>`).join("");
   $("#heroActions").innerHTML = teacher
@@ -541,10 +576,16 @@ async function refreshFirebaseData() {
   if (!firebaseAvailable || !currentUser) return;
   if (currentUser.role === "teacher") {
     const studentSnap = await getDocs(collection(db, "students"));
-    if (!studentSnap.empty) students = studentSnap.docs.map((item) => item.data());
+    if (!studentSnap.empty) students = studentSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
     const checkinSnap = await getDocs(query(collection(db, "checkins"), orderBy("createdAt", "desc"), limit(30)));
     if (!checkinSnap.empty) {
-      recentCheckins = checkinSnap.docs.map((item) => item.data());
+      recentCheckins = checkinSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+      saveJson(STORAGE_KEYS.checkins, recentCheckins);
+    }
+  } else {
+    const checkinSnap = await getDocs(query(collection(db, "checkins"), orderBy("createdAt", "desc"), limit(30)));
+    if (!checkinSnap.empty) {
+      recentCheckins = checkinSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
       saveJson(STORAGE_KEYS.checkins, recentCheckins);
     }
   }
@@ -574,7 +615,9 @@ function renderMessages() {
   const box = $("#messages");
   if (!box) return;
   const viewerLanguageCode = getViewerLanguageCode();
-  const messages = getMessages().filter((message) => activeFilter === "all" || message.lang === activeFilter);
+  const messages = getMessages()
+    .filter(canViewMessage)
+    .filter((message) => activeFilter === "all" || message.lang === activeFilter);
   box.innerHTML = "";
   messages.forEach((message) => {
     const sourceCode = getMessageSourceCode(message);
@@ -585,9 +628,9 @@ function renderMessages() {
     const item = document.createElement("article");
     item.className = "msg";
     item.innerHTML = `
-      <strong>${message.name}<small>${sourceLabel}</small></strong>
-      <p>${translatedText}</p>
-      <small>${sameLanguage ? "내 모국어로 작성된 글입니다." : `${viewerLabel} 번역 / 원문(${sourceLabel}): ${message.text}`}</small>
+      <strong>${escapeHtml(message.title || message.name)}<small>${escapeHtml(sourceLabel)}</small></strong>
+      <p>${escapeHtml(translatedText)}</p>
+      <small>${escapeHtml(sameLanguage ? "내 모국어로 작성된 글입니다." : `${viewerLabel} 번역 / 원문(${sourceLabel}): ${message.text}`)}</small>
     `;
     box.appendChild(item);
   });
@@ -597,11 +640,42 @@ function renderMessages() {
 function renderStudents() {
   const tbody = $("#studentTable");
   tbody.innerHTML = "";
-  students.forEach((student) => {
+  const filteredStudents = students.filter((student) => {
+    const language = student.lang || student.language || "-";
+    const status = student.status || "확인";
+    const languageMatches = studentLanguageFilter === "all" || language === studentLanguageFilter;
+    const statusMatches = studentStatusFilter === "all" || status.includes(studentStatusFilter);
+    return languageMatches && statusMatches;
+  });
+  if (!filteredStudents.length) {
+    tbody.innerHTML = `<tr><td colspan="7">조건에 맞는 학생이 없습니다.</td></tr>`;
+    return;
+  }
+  filteredStudents.forEach((student) => {
+    const studentId = getStudentId(student);
+    const latestCheckin = getLatestCheckinForStudent(student);
+    const latestMood = latestCheckin ? getMoodByKey(latestCheckin.moodKey || latestCheckin.mood).ko : "기록 없음";
+    const latestText = latestCheckin ? getCheckinTranslation(latestCheckin, getViewerLanguageCode()) : "최근 체크인 없음";
+    const helpRequested = latestCheckin?.help || student.status?.includes("도움");
     const row = document.createElement("tr");
     const isDanger = student.status?.includes("도움") || student.status?.includes("관찰");
-    row.innerHTML = `<td>${student.name}</td><td>${student.lang || student.language || "-"}</td><td><span class="tag ${isDanger ? "danger" : ""}">${student.status || "확인"}</span></td><td><button class="secondary" type="button" data-student="${student.name}">상담 메모</button></td>`;
+    row.innerHTML = `
+      <td><input class="student-select" type="checkbox" data-student-id="${escapeHtml(studentId)}" ${selectedStudentIds.has(studentId) ? "checked" : ""} aria-label="${escapeHtml(student.name)} 선택" /></td>
+      <td><strong>${escapeHtml(student.name)}</strong></td>
+      <td>${escapeHtml(student.lang || student.language || "-")}</td>
+      <td><span class="tag ${isDanger ? "danger" : ""}">${escapeHtml(student.status || "확인")}</span></td>
+      <td><span class="student-mood">${escapeHtml(latestMood)}</span><small>${escapeHtml(latestText)}</small></td>
+      <td><span class="tag ${helpRequested ? "danger" : ""}">${helpRequested ? "필요" : "없음"}</span></td>
+      <td><button class="secondary" type="button" data-student="${escapeHtml(student.name)}">상담 메모</button></td>
+    `;
     tbody.appendChild(row);
+  });
+  $$(".student-select").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedStudentIds.add(checkbox.dataset.studentId);
+      else selectedStudentIds.delete(checkbox.dataset.studentId);
+      renderRecipientSummary();
+    });
   });
   $$('[data-student]').forEach((button) => {
     button.addEventListener("click", () => {
@@ -609,6 +683,37 @@ function renderStudents() {
       showToast(`${student.name} 학생 메모: ${student.note || "메모 없음"}`);
     });
   });
+  renderRecipientSummary();
+}
+
+function renderStudentFilters() {
+  const languageSelect = $("#studentLanguageFilter");
+  const statusSelect = $("#studentStatusFilter");
+  if (!languageSelect || !statusSelect) return;
+  const languages = [...new Set(students.map((student) => student.lang || student.language).filter(Boolean))].sort();
+  languageSelect.innerHTML = `<option value="all">전체</option>${languages.map((language) => `<option value="${escapeHtml(language)}">${escapeHtml(language)}</option>`).join("")}`;
+  languageSelect.value = languages.includes(studentLanguageFilter) ? studentLanguageFilter : "all";
+  statusSelect.value = studentStatusFilter;
+}
+
+function getLatestCheckinForStudent(student) {
+  const name = student.name;
+  return getCheckins().find((checkin) => checkin.studentName === name || checkin.studentId === student.loginId || checkin.studentId === student.id);
+}
+
+function getSelectedStudents() {
+  return students.filter((student) => selectedStudentIds.has(getStudentId(student)));
+}
+
+function renderRecipientSummary() {
+  const summary = $("#recipientSummary");
+  if (!summary) return;
+  const selected = getSelectedStudents();
+  if (!selected.length) {
+    summary.textContent = "학생 관리 목록에서 받을 학생을 선택하세요.";
+    return;
+  }
+  summary.textContent = `${selected.length}명 선택: ${selected.map((student) => student.name).join(", ")}`;
 }
 
 function getCheckins() {
@@ -621,22 +726,88 @@ function renderTeacherCheckins() {
   const checkins = getCheckins().slice(0, 20);
   tbody.innerHTML = "";
   if (!checkins.length) {
-    tbody.innerHTML = `<tr><td colspan="4">아직 저장된 체크인 기록이 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6">아직 저장된 체크인 기록이 없습니다.</td></tr>`;
     return;
   }
-  checkins.forEach((checkin) => {
+  checkins.forEach((checkin, index) => {
+    const teacherLanguageCode = getViewerLanguageCode();
     const mood = getMoodByKey(checkin.moodKey || checkin.mood);
-    const koreanText = checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음";
+    const translatedText = getCheckinTranslation(checkin, teacherLanguageCode);
+    const sourceLabel = languageNames[normalizeLanguage(checkin.sourceLangCode || checkin.sourceLang || "ko")] || "원문";
     const helpText = checkin.help ? "도움 요청" : "일반 기록";
+    const reply = checkin.reply?.text || "";
     const row = document.createElement("tr");
+    row.className = "checkin-row";
     row.innerHTML = `
-      <td>${checkin.studentName || checkin.studentId || "학생"}</td>
-      <td>${mood.ko}</td>
-      <td>${koreanText}</td>
+      <td>${escapeHtml(checkin.studentName || checkin.studentId || "학생")}</td>
+      <td>${escapeHtml(mood.ko)}</td>
+      <td><span class="student-mood">${escapeHtml(languageNames[teacherLanguageCode])}</span><small>${escapeHtml(translatedText)}</small></td>
+      <td><span class="student-mood">${escapeHtml(sourceLabel)}</span><small>${escapeHtml(checkin.text || "내용 없음")}</small></td>
       <td><span class="tag ${checkin.help ? "danger" : ""}">${helpText}</span></td>
+      <td>
+        <div class="reply-cell">
+          <p>${reply ? escapeHtml(reply) : "아직 답장이 없습니다."}</p>
+          <textarea class="reply-input" data-checkin-index="${index}" placeholder="학생에게 보낼 답장을 입력하세요.">${escapeHtml(reply)}</textarea>
+          <button class="secondary reply-save" type="button" data-checkin-index="${index}">답장 저장</button>
+        </div>
+      </td>
     `;
     tbody.appendChild(row);
   });
+  $$(".reply-save").forEach((button) => {
+    button.addEventListener("click", () => saveCheckinReply(Number(button.dataset.checkinIndex)));
+  });
+}
+
+function renderStudentReplies() {
+  const list = $("#studentReplyList");
+  if (!list) return;
+  const studentId = currentUser?.loginId;
+  const checkins = getCheckins()
+    .filter((checkin) => !studentId || checkin.studentId === studentId)
+    .filter((checkin) => checkin.reply?.text)
+    .slice(0, 10);
+  if (!checkins.length) {
+    list.innerHTML = `<p class="muted">아직 도착한 답장이 없습니다.</p>`;
+    return;
+  }
+  list.innerHTML = checkins.map((checkin) => {
+    const mood = getMoodByKey(checkin.moodKey || checkin.mood);
+    const replyDate = checkin.reply.createdAt ? new Date(checkin.reply.createdAt).toLocaleString("ko-KR") : "방금 전";
+    return `
+      <article class="reply-card">
+        <strong>${escapeHtml(checkin.reply.teacherName || "선생님")} <small>${escapeHtml(replyDate)}</small></strong>
+        <p>${escapeHtml(checkin.reply.text)}</p>
+        <small>내 체크인: ${escapeHtml(mood.ko)} · ${escapeHtml(checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음")}</small>
+      </article>
+    `;
+  }).join("");
+}
+
+async function saveCheckinReply(index) {
+  const checkins = getCheckins();
+  const checkin = checkins[index];
+  const input = $(`.reply-input[data-checkin-index="${index}"]`);
+  const text = input?.value.trim();
+  if (!checkin || !text) return showToast("답장 내용을 입력해 주세요.");
+  const reply = {
+    text,
+    teacherId: currentUser?.loginId || "teacher",
+    teacherName: currentUser?.name || "교사",
+    createdAt: new Date().toISOString()
+  };
+  checkin.reply = reply;
+  recentCheckins = checkins;
+  saveJson(STORAGE_KEYS.checkins, checkins);
+  if (firebaseAvailable && checkin.id) {
+    await updateDoc(doc(db, "checkins", checkin.id), {
+      reply,
+      updatedAt: serverTimestamp()
+    });
+  }
+  renderTeacherCheckins();
+  renderStudentReplies();
+  showToast("학생 체크인에 답장을 저장했습니다.");
 }
 
 function updateStats() {
@@ -674,10 +845,15 @@ async function saveCheckin() {
     checkins.unshift(checkin);
     recentCheckins = checkins;
     saveJson(STORAGE_KEYS.checkins, checkins);
-    if (firebaseAvailable) await addDoc(collection(db, "checkins"), { ...checkin, createdAt: serverTimestamp() });
+    if (firebaseAvailable) {
+      const checkinRef = await addDoc(collection(db, "checkins"), { ...checkin, createdAt: serverTimestamp() });
+      checkin.id = checkinRef.id;
+      saveJson(STORAGE_KEYS.checkins, checkins);
+    }
     $("#checkinText").value = "";
     $("#helpCheck").checked = false;
     renderTeacherCheckins();
+    renderStudentReplies();
     updateStats();
     showToast(checkin.help ? "도움 요청과 체크인이 저장되었습니다." : "오늘 체크인이 저장되었습니다.");
   } finally {
@@ -717,11 +893,55 @@ async function sendMessage() {
   }
 }
 
-function makeNotice() {
-  const title = $("#noticeTitle").value.trim() || "학교생활 안내";
-  const body = $("#noticeBody").value.trim() || "내일 준비물과 일정을 확인해 주세요.";
-  $("#noticePreview").textContent = `[쉬운 한국어]\n${title}\n${body}\n\n[English sample]\nNotice: ${title}\nPlease check this information: ${body}\n\n[Vietnamese sample]\nThông báo: ${title}\nVui lòng kiểm tra nội dung sau: ${body}\n\n[교사용 확인]\n- 발송 전 개인정보 포함 여부 확인\n- 필요 시 통역 지원 또는 학부모 연락 기록 저장`;
-  showToast("다국어 공지 미리보기를 만들었습니다.");
+async function sendTeacherMessage() {
+  const selected = getSelectedStudents();
+  const title = $("#teacherMessageTitle").value.trim() || "선생님 메시지";
+  const body = $("#teacherMessageBody").value.trim();
+  if (!selected.length) return showToast("메시지를 받을 학생을 먼저 선택해 주세요.");
+  if (!body) return showToast("보낼 메시지 내용을 입력해 주세요.");
+
+  const sourceLangCode = getViewerLanguageCode();
+  const sendButton = $("#sendTeacherMessage");
+  sendButton.disabled = true;
+  sendButton.textContent = "번역 중";
+  try {
+    const translations = await translateMessageText(body, sourceLangCode);
+    const recipients = selected.map((student) => getStudentId(student));
+    const message = {
+      type: "teacher",
+      title,
+      name: currentUser?.name || "선생님",
+      senderId: currentUser?.loginId || "teacher",
+      senderRole: "teacher",
+      recipients,
+      recipientNames: selected.map((student) => student.name),
+      recipientLanguages: selected.map((student) => ({
+        studentId: getStudentId(student),
+        languageCode: getStudentLanguageCode(student),
+        languageName: languageNames[getStudentLanguageCode(student)]
+      })),
+      lang: languageKoreanNames[sourceLangCode],
+      sourceLangCode,
+      text: body,
+      translations,
+      createdAt: new Date().toISOString()
+    };
+    const messages = getMessages();
+    messages.push(message);
+    saveJson(STORAGE_KEYS.messages, messages);
+    if (firebaseAvailable) await addDoc(collection(db, "messages"), { ...message, createdAt: serverTimestamp() });
+    $("#teacherMessageTitle").value = "";
+    $("#teacherMessageBody").value = "";
+    $("#teacherMessagePreview").textContent = selected.map((student) => {
+      const languageCode = getStudentLanguageCode(student);
+      return `[${student.name} · ${languageNames[languageCode]}]\n${translations[languageCode] || body}`;
+    }).join("\n\n");
+    renderMessages();
+    showToast(`${selected.length}명에게 메시지를 보냈습니다.`);
+  } finally {
+    sendButton.disabled = false;
+    sendButton.textContent = "선택 학생에게 보내기";
+  }
 }
 
 async function generateDoc() {
@@ -773,13 +993,31 @@ function setupEvents() {
     }
     showToast(`${languageNames[languageCode]} 메뉴로 바뀌었습니다.`);
   });
+  $("#studentLanguageFilter").addEventListener("change", (event) => {
+    studentLanguageFilter = event.target.value;
+    renderStudents();
+  });
+  $("#studentStatusFilter").addEventListener("change", (event) => {
+    studentStatusFilter = event.target.value;
+    renderStudents();
+  });
+  $("#selectAllStudents").addEventListener("click", () => {
+    students.forEach((student) => selectedStudentIds.add(getStudentId(student)));
+    renderStudents();
+    showToast("모든 학생을 메시지 대상으로 선택했습니다.");
+  });
+  $("#clearSelectedStudents").addEventListener("click", () => {
+    selectedStudentIds.clear();
+    renderStudents();
+    showToast("메시지 대상 선택을 해제했습니다.");
+  });
   $("#saveCheckin").addEventListener("click", saveCheckin);
   $("#sendMessage").addEventListener("click", sendMessage);
   $("#messageInput").addEventListener("keydown", (event) => { if (event.key === "Enter") sendMessage(); });
   $("#nextQuestion").addEventListener("click", () => {
     $("#cultureQuestion").textContent = cultureQuestions[Math.floor(Math.random() * cultureQuestions.length)];
   });
-  $("#makeNotice").addEventListener("click", makeNotice);
+  $("#sendTeacherMessage").addEventListener("click", sendTeacherMessage);
   $("#generateDoc").addEventListener("click", generateDoc);
   $("#copyDoc").addEventListener("click", copyDoc);
 }
@@ -803,6 +1041,7 @@ async function boot() {
   renderMessages();
   renderStudents();
   renderTeacherCheckins();
+  renderStudentReplies();
   updateStats();
   setupFilters();
   setupEvents();
@@ -810,5 +1049,3 @@ async function boot() {
 }
 
 boot();
-
-

@@ -230,6 +230,7 @@ textarea { min-height: 112px; resize: vertical; }
 
 .lounge-layout, .teacher-grid, .ai-workbench { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); gap: 20px; }
 .chat-card, .culture-card, .table-card, .notice-card, .form-card, .doc-output { padding: 22px; }
+.table-card { overflow-x: auto; }
 .chat-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .chat-tabs button { padding: 9px 12px; border-radius: var(--radius); background: #eef3f1; color: var(--muted); font-weight: 900; }
 .chat-tabs .active { background: var(--green); color: #fff; }
@@ -251,8 +252,82 @@ th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 12px; 
 th { color: var(--muted); font-size: 13px; }
 .tag { display: inline-block; padding: 6px 10px; border-radius: var(--radius); background: var(--green-soft); color: var(--green); font-weight: 900; font-size: 12px; }
 .tag.danger { background: #fff0ed; color: #c84934; }
+.student-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.student-tools label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+.student-mood {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 900;
+}
+.student-select { width: auto; accent-color: var(--green); }
+td small {
+  display: block;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.recipient-summary {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9fb;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.message-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
 .notice-card { display: grid; gap: 12px; align-content: start; }
 .checkin-records { grid-column: 1 / -1; }
+.reply-box {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.reply-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.reply-card {
+  padding: 14px;
+  border: 1px solid #dce6ff;
+  border-radius: var(--radius);
+  background: #f6f9ff;
+}
+.reply-card strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.reply-card p { margin: 10px 0; line-height: 1.6; }
+.reply-cell {
+  display: grid;
+  gap: 8px;
+  min-width: 240px;
+}
+.reply-cell p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.reply-input { min-height: 74px; }
 
 .form-card { display: grid; gap: 14px; align-content: start; }
 .form-card label { display: grid; gap: 8px; font-weight: 900; }
