@@ -195,14 +195,17 @@
               </select>
             </label>
           </div>
-          <table>
-            <thead><tr><th>선택</th><th>이름</th><th>모국어</th><th>상태</th><th>최근 체크인</th><th>도움</th><th>메모</th></tr></thead>
-            <tbody id="studentTable"></tbody>
-          </table>
+          <div class="student-list" id="studentList"></div>
         </article>
         <article class="notice-card">
           <h3>학생에게 메시지 보내기</h3>
           <div class="recipient-summary" id="recipientSummary">학생 관리 목록에서 받을 학생을 선택하세요.</div>
+          <label class="recipient-picker">개별 학생 선택
+            <select id="recipientPicker">
+              <option value="">학생 선택</option>
+            </select>
+          </label>
+          <button class="secondary" id="addRecipient" type="button">선택 학생 추가</button>
           <div class="message-actions">
             <button class="secondary" id="selectAllStudents" type="button">전체 선택</button>
             <button class="secondary" id="clearSelectedStudents" type="button">선택 해제</button>

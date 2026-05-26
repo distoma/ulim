@@ -270,11 +270,71 @@ th { color: var(--muted); font-size: 13px; }
   margin-bottom: 4px;
   font-weight: 900;
 }
-.student-select { width: auto; accent-color: var(--green); }
+.student-list {
+  display: grid;
+  gap: 12px;
+}
+.student-card {
+  display: grid;
+  grid-template-columns: 126px minmax(120px, .7fr) minmax(180px, 1fr) minmax(190px, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.student-card.selected {
+  border-color: var(--green);
+  background: var(--green-soft);
+  box-shadow: 0 8px 18px rgba(47, 125, 103, .12);
+}
+.student-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--green);
+}
+.student-select { width: 18px; height: 18px; accent-color: var(--green); }
+.student-main strong { display: block; font-size: 18px; }
+.student-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.student-meta > span:first-child {
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: #eef3f1;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.student-latest {
+  min-width: 0;
+}
+.empty-state {
+  margin: 0;
+  padding: 22px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: #f7f9fb;
+}
 td small {
   display: block;
   color: var(--muted);
   line-height: 1.5;
+}
+.recipient-picker {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
 }
 .recipient-summary {
   padding: 12px;
@@ -359,6 +419,7 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
   .login-screen, .hero, .lounge-layout, .teacher-grid, .ai-workbench { grid-template-columns: 1fr; }
   .support-grid, .dashboard { grid-template-columns: repeat(2, 1fr); }
   .schema-grid { grid-template-columns: repeat(2, 1fr); }
+  .student-card { grid-template-columns: 1fr 1fr; }
   .top-nav { display: none; }
 }
 @media (max-width: 620px) {
@@ -371,6 +432,7 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
   .hero { padding: 38px 16px 24px; }
   .panel { margin: 22px 0; padding: 24px 16px; border-left: 0; border-right: 0; }
   .support-grid, .dashboard, .schema-grid { grid-template-columns: 1fr; }
+  .student-tools, .student-card, .message-actions { grid-template-columns: 1fr; }
   .composer { grid-template-columns: 1fr; }
   .hero-copy h1, .login-visual h1 { font-size: 36px; }
   .toast { left: 16px; right: 16px; }

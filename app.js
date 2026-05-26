@@ -284,11 +284,12 @@ const translationMemory = {
   }
 };
 const defaultStudents = [
-  { name: "린", lang: "베트남어", status: "도움 요청", note: "급식 적응 상담 필요" },
-  { name: "샤오", lang: "중국어", status: "관찰 필요", note: "또래 관계 확인" },
-  { name: "Sara", lang: "영어", status: "안정", note: "체크인 꾸준함" },
-  { name: "바트", lang: "몽골어", status: "상담 예정", note: "학부모 통역 필요" },
-  { name: "마리아", lang: "필리핀어", status: "안정", note: "방과후 참여" }
+  { id: "student01", loginId: "student01", name: "학생 체험", grade: "체험 계정", classroom: "데모", lang: "한국어", languageCode: "ko", status: "안정", note: "체험 로그인 계정과 연결된 학생입니다." },
+  { id: "student-linh", loginId: "student-linh", name: "린", grade: "3학년", classroom: "2반", lang: "베트남어", languageCode: "vi", status: "도움 요청", note: "급식 적응 상담 필요" },
+  { id: "student-xiao", loginId: "student-xiao", name: "샤오", grade: "4학년", classroom: "1반", lang: "중국어", languageCode: "zh", status: "관찰 필요", note: "또래 관계 확인" },
+  { id: "student-sara", loginId: "student-sara", name: "Sara", grade: "5학년", classroom: "3반", lang: "영어", languageCode: "en", status: "안정", note: "체크인 꾸준함" },
+  { id: "student-bat", loginId: "student-bat", name: "바트", grade: "2학년", classroom: "4반", lang: "몽골어", languageCode: "mn", status: "상담 예정", note: "학부모 통역 필요" },
+  { id: "student-maria", loginId: "student-maria", name: "마리아", grade: "6학년", classroom: "1반", lang: "영어", languageCode: "en", status: "안정", note: "방과후 참여" }
 ];
 const cultureQuestions = [
   "우리 학교 급식 시간에는 어떻게 줄을 서면 좋을까요?",
@@ -424,6 +425,15 @@ function getCheckinTranslation(checkin, targetCode) {
   return checkin.translations?.[normalizedTarget] || checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음";
 }
 
+function mergeStudents(remoteStudents = []) {
+  const byName = new Map(defaultStudents.map((student) => [student.name, { ...student }]));
+  remoteStudents.forEach((student) => {
+    const fallback = byName.get(student.name) || {};
+    byName.set(student.name, { ...fallback, ...student });
+  });
+  return [...byName.values()];
+}
+
 function buildTranslationBundle(text, sourceCode) {
   const normalizedSource = normalizeLanguage(sourceCode);
   const known = translationMemory[text];
@@ -533,7 +543,7 @@ async function enterApp(user) {
   renderMessages();
   renderStudents();
   renderStudentFilters();
-  renderRecipientSummary();
+  renderRecipientControls();
   renderTeacherCheckins();
   renderStudentReplies();
   updateStats();
@@ -576,7 +586,12 @@ async function refreshFirebaseData() {
   if (!firebaseAvailable || !currentUser) return;
   if (currentUser.role === "teacher") {
     const studentSnap = await getDocs(collection(db, "students"));
-    if (!studentSnap.empty) students = studentSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+    if (!studentSnap.empty) {
+      const remoteStudents = studentSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+      students = mergeStudents(remoteStudents);
+    } else {
+      students = mergeStudents([]);
+    }
     const checkinSnap = await getDocs(query(collection(db, "checkins"), orderBy("createdAt", "desc"), limit(30)));
     if (!checkinSnap.empty) {
       recentCheckins = checkinSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
@@ -638,8 +653,9 @@ function renderMessages() {
 }
 
 function renderStudents() {
-  const tbody = $("#studentTable");
-  tbody.innerHTML = "";
+  const list = $("#studentList");
+  if (!list) return;
+  list.innerHTML = "";
   const filteredStudents = students.filter((student) => {
     const language = student.lang || student.language || "-";
     const status = student.status || "확인";
@@ -648,7 +664,8 @@ function renderStudents() {
     return languageMatches && statusMatches;
   });
   if (!filteredStudents.length) {
-    tbody.innerHTML = `<tr><td colspan="7">조건에 맞는 학생이 없습니다.</td></tr>`;
+    list.innerHTML = `<p class="empty-state">조건에 맞는 학생이 없습니다.</p>`;
+    renderRecipientControls();
     return;
   }
   filteredStudents.forEach((student) => {
@@ -657,23 +674,36 @@ function renderStudents() {
     const latestMood = latestCheckin ? getMoodByKey(latestCheckin.moodKey || latestCheckin.mood).ko : "기록 없음";
     const latestText = latestCheckin ? getCheckinTranslation(latestCheckin, getViewerLanguageCode()) : "최근 체크인 없음";
     const helpRequested = latestCheckin?.help || student.status?.includes("도움");
-    const row = document.createElement("tr");
+    const card = document.createElement("article");
     const isDanger = student.status?.includes("도움") || student.status?.includes("관찰");
-    row.innerHTML = `
-      <td><input class="student-select" type="checkbox" data-student-id="${escapeHtml(studentId)}" ${selectedStudentIds.has(studentId) ? "checked" : ""} aria-label="${escapeHtml(student.name)} 선택" /></td>
-      <td><strong>${escapeHtml(student.name)}</strong></td>
-      <td>${escapeHtml(student.lang || student.language || "-")}</td>
-      <td><span class="tag ${isDanger ? "danger" : ""}">${escapeHtml(student.status || "확인")}</span></td>
-      <td><span class="student-mood">${escapeHtml(latestMood)}</span><small>${escapeHtml(latestText)}</small></td>
-      <td><span class="tag ${helpRequested ? "danger" : ""}">${helpRequested ? "필요" : "없음"}</span></td>
-      <td><button class="secondary" type="button" data-student="${escapeHtml(student.name)}">상담 메모</button></td>
+    card.className = `student-card${selectedStudentIds.has(studentId) ? " selected" : ""}`;
+    card.innerHTML = `
+      <label class="student-check">
+        <input class="student-select" type="checkbox" data-student-id="${escapeHtml(studentId)}" ${selectedStudentIds.has(studentId) ? "checked" : ""} />
+        <span>메시지 대상</span>
+      </label>
+      <div class="student-main">
+        <strong>${escapeHtml(student.name)}</strong>
+        <small>${escapeHtml(student.grade || "-")} · ${escapeHtml(student.classroom || "-")}</small>
+      </div>
+      <div class="student-meta">
+        <span>${escapeHtml(student.lang || student.language || "-")}</span>
+        <span class="tag ${isDanger ? "danger" : ""}">${escapeHtml(student.status || "확인")}</span>
+        <span class="tag ${helpRequested ? "danger" : ""}">${helpRequested ? "도움 필요" : "도움 없음"}</span>
+      </div>
+      <div class="student-latest">
+        <span class="student-mood">${escapeHtml(latestMood)}</span>
+        <small>${escapeHtml(latestText)}</small>
+      </div>
+      <button class="secondary" type="button" data-student="${escapeHtml(student.name)}">상담 메모</button>
     `;
-    tbody.appendChild(row);
+    list.appendChild(card);
   });
   $$(".student-select").forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) selectedStudentIds.add(checkbox.dataset.studentId);
       else selectedStudentIds.delete(checkbox.dataset.studentId);
+      renderStudents();
       renderRecipientSummary();
     });
   });
@@ -683,7 +713,7 @@ function renderStudents() {
       showToast(`${student.name} 학생 메모: ${student.note || "메모 없음"}`);
     });
   });
-  renderRecipientSummary();
+  renderRecipientControls();
 }
 
 function renderStudentFilters() {
@@ -714,6 +744,17 @@ function renderRecipientSummary() {
     return;
   }
   summary.textContent = `${selected.length}명 선택: ${selected.map((student) => student.name).join(", ")}`;
+}
+
+function renderRecipientControls() {
+  renderRecipientSummary();
+  const picker = $("#recipientPicker");
+  if (!picker) return;
+  picker.innerHTML = `<option value="">학생 선택</option>${students.map((student) => {
+    const studentId = getStudentId(student);
+    const selectedText = selectedStudentIds.has(studentId) ? "선택됨" : "미선택";
+    return `<option value="${escapeHtml(studentId)}">${escapeHtml(student.name)} · ${escapeHtml(student.lang || student.language || "-")} · ${selectedText}</option>`;
+  }).join("")}`;
 }
 
 function getCheckins() {
@@ -1000,6 +1041,15 @@ function setupEvents() {
   $("#studentStatusFilter").addEventListener("change", (event) => {
     studentStatusFilter = event.target.value;
     renderStudents();
+  });
+  $("#addRecipient").addEventListener("click", () => {
+    const picker = $("#recipientPicker");
+    const studentId = picker.value;
+    if (!studentId) return showToast("추가할 학생을 선택해 주세요.");
+    selectedStudentIds.add(studentId);
+    picker.value = "";
+    renderStudents();
+    showToast("메시지 대상에 학생을 추가했습니다.");
   });
   $("#selectAllStudents").addEventListener("click", () => {
     students.forEach((student) => selectedStudentIds.add(getStudentId(student)));
