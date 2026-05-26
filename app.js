@@ -347,6 +347,12 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function formatDateTime(value, fallback = "저장됨") {
+  if (!value) return fallback;
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString("ko-KR");
+}
+
 function normalizeLanguage(value) {
   return languageNames[value] ? value : languageAliases[value] || "ko";
 }
@@ -545,7 +551,7 @@ async function enterApp(user) {
   renderStudentFilters();
   renderRecipientControls();
   renderTeacherCheckins();
-  renderStudentReplies();
+  renderStudentDashboard();
   updateStats();
   location.hash = user.role === "teacher" ? "#teacher" : "#student";
 }
@@ -650,6 +656,40 @@ function renderMessages() {
     box.appendChild(item);
   });
   box.scrollTop = box.scrollHeight;
+}
+
+function getStudentCheckins() {
+  const studentId = currentUser?.loginId;
+  const studentName = currentUser?.name;
+  return getCheckins()
+    .filter((checkin) => !studentId || checkin.studentId === studentId || checkin.studentName === studentName)
+    .slice(0, 20);
+}
+
+function renderStudentTeacherMessages() {
+  const list = $("#studentTeacherMessages");
+  if (!list) return;
+  const viewerLanguageCode = getViewerLanguageCode();
+  const teacherMessages = getMessages()
+    .filter((message) => message.senderRole === "teacher" || message.type === "teacher")
+    .filter(canViewMessage)
+    .slice(-10)
+    .reverse();
+  if (!teacherMessages.length) {
+    list.innerHTML = `<p class="muted">아직 선생님에게 받은 메시지가 없습니다.</p>`;
+    return;
+  }
+  list.innerHTML = teacherMessages.map((message) => {
+    const sentAt = formatDateTime(message.createdAt, "방금 전");
+    const translatedText = getMessageTranslation(message, viewerLanguageCode);
+    return `
+      <article class="reply-card teacher-message-card">
+        <strong>${escapeHtml(message.title || "선생님 메시지")} <small>${escapeHtml(sentAt)}</small></strong>
+        <p>${escapeHtml(translatedText)}</p>
+        <small>보낸 사람: ${escapeHtml(message.name || "선생님")}</small>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderStudents() {
@@ -800,29 +840,36 @@ function renderTeacherCheckins() {
   });
 }
 
-function renderStudentReplies() {
-  const list = $("#studentReplyList");
+function renderStudentCheckinHistory() {
+  const list = $("#studentCheckinHistory");
   if (!list) return;
-  const studentId = currentUser?.loginId;
-  const checkins = getCheckins()
-    .filter((checkin) => !studentId || checkin.studentId === studentId)
-    .filter((checkin) => checkin.reply?.text)
-    .slice(0, 10);
+  const checkins = getStudentCheckins();
   if (!checkins.length) {
-    list.innerHTML = `<p class="muted">아직 도착한 답장이 없습니다.</p>`;
+    list.innerHTML = `<p class="muted">아직 남긴 체크인 기록이 없습니다.</p>`;
     return;
   }
   list.innerHTML = checkins.map((checkin) => {
     const mood = getMoodByKey(checkin.moodKey || checkin.mood);
-    const replyDate = checkin.reply.createdAt ? new Date(checkin.reply.createdAt).toLocaleString("ko-KR") : "방금 전";
+    const createdAt = formatDateTime(checkin.createdAt, "저장됨");
+    const replyDate = formatDateTime(checkin.reply?.createdAt, "");
+    const viewerText = getCheckinTranslation(checkin, getViewerLanguageCode());
+    const replyHtml = checkin.reply?.text
+      ? `<div class="teacher-reply"><strong>${escapeHtml(checkin.reply.teacherName || "선생님")} 답장 <small>${escapeHtml(replyDate)}</small></strong><p>${escapeHtml(checkin.reply.text)}</p></div>`
+      : `<div class="teacher-reply waiting"><strong>선생님 답장</strong><p>아직 답장이 없습니다.</p></div>`;
     return `
-      <article class="reply-card">
-        <strong>${escapeHtml(checkin.reply.teacherName || "선생님")} <small>${escapeHtml(replyDate)}</small></strong>
-        <p>${escapeHtml(checkin.reply.text)}</p>
-        <small>내 체크인: ${escapeHtml(mood.ko)} · ${escapeHtml(checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음")}</small>
+      <article class="reply-card checkin-history-card">
+        <strong>${escapeHtml(mood.ko)} <small>${escapeHtml(createdAt)}</small></strong>
+        <p>${escapeHtml(viewerText)}</p>
+        <small>원문: ${escapeHtml(checkin.text || "내용 없음")} · ${checkin.help ? "도움 요청함" : "일반 기록"}</small>
+        ${replyHtml}
       </article>
     `;
   }).join("");
+}
+
+function renderStudentDashboard() {
+  renderStudentTeacherMessages();
+  renderStudentCheckinHistory();
 }
 
 async function saveCheckinReply(index) {
@@ -847,8 +894,8 @@ async function saveCheckinReply(index) {
     });
   }
   renderTeacherCheckins();
-  renderStudentReplies();
-  showToast("학생 체크인에 답장을 저장했습니다.");
+  renderStudentDashboard();
+  showToast("학생에게 답장을 보내고 저장했습니다.");
 }
 
 function updateStats() {
@@ -894,7 +941,7 @@ async function saveCheckin() {
     $("#checkinText").value = "";
     $("#helpCheck").checked = false;
     renderTeacherCheckins();
-    renderStudentReplies();
+    renderStudentDashboard();
     updateStats();
     showToast(checkin.help ? "도움 요청과 체크인이 저장되었습니다." : "오늘 체크인이 저장되었습니다.");
   } finally {
@@ -1091,7 +1138,7 @@ async function boot() {
   renderMessages();
   renderStudents();
   renderTeacherCheckins();
-  renderStudentReplies();
+  renderStudentDashboard();
   updateStats();
   setupFilters();
   setupEvents();

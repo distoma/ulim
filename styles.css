@@ -353,12 +353,16 @@ td small {
 }
 .notice-card { display: grid; gap: 12px; align-content: start; }
 .checkin-records { grid-column: 1 / -1; }
-.reply-box {
+.teacher-message-box, .reply-box {
   margin-top: 18px;
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
+}
+.teacher-message-box {
+  background: #f6f9ff;
+  border-color: #dce6ff;
 }
 .reply-list {
   display: grid;
@@ -377,6 +381,33 @@ td small {
   gap: 10px;
 }
 .reply-card p { margin: 10px 0; line-height: 1.6; }
+.teacher-message-card {
+  background: #fff;
+}
+.checkin-history-card {
+  background: #fffdf8;
+  border-color: #f1dfb4;
+}
+.teacher-reply {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--green-soft);
+  border: 1px solid #c8e6d8;
+}
+.teacher-reply strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.teacher-reply p {
+  margin: 8px 0 0;
+}
+.teacher-reply.waiting {
+  background: #f7f9fb;
+  border-color: var(--line);
+  color: var(--muted);
+}
 .reply-cell {
   display: grid;
   gap: 8px;

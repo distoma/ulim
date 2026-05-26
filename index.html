@@ -116,12 +116,19 @@
         <label class="inline"><input type="checkbox" id="helpCheck" /> <span id="helpCheckLabel">선생님 도움이 필요해요</span></label>
         <button class="primary" id="saveCheckin" type="button">기록 저장</button>
       </div>
+      <div class="teacher-message-box">
+        <div>
+          <h3>선생님 메시지</h3>
+          <p class="muted">선생님이 나에게 보낸 메시지를 내 모국어로 확인할 수 있습니다.</p>
+        </div>
+        <div class="reply-list" id="studentTeacherMessages"></div>
+      </div>
       <div class="reply-box">
         <div>
-          <h3>선생님 답장</h3>
-          <p class="muted">내가 남긴 체크인에 대한 선생님 답장을 확인할 수 있습니다.</p>
+          <h3>내 체크인 기록과 선생님 답장</h3>
+          <p class="muted">내가 남긴 체크인과 선생님이 보낸 답장을 함께 확인할 수 있습니다.</p>
         </div>
-        <div class="reply-list" id="studentReplyList"></div>
+        <div class="reply-list" id="studentCheckinHistory"></div>
       </div>
     </section>
 
