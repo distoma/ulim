@@ -431,7 +431,7 @@ pre { white-space: pre-wrap; background: #f7f9fb; border: 1px solid var(--line);
 footer { text-align: center; color: var(--muted); padding: 38px 20px; }
 .toast {
   position: fixed;
-  right: 24px;
+  left: 24px;
   bottom: 24px;
   z-index: 20;
   max-width: 360px;

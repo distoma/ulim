@@ -431,6 +431,11 @@ function getCheckinTranslation(checkin, targetCode) {
   return checkin.translations?.[normalizedTarget] || checkin.translations?.ko || checkin.koreanText || checkin.text || "내용 없음";
 }
 
+function getReplyTranslation(reply, targetCode) {
+  const normalizedTarget = normalizeLanguage(targetCode);
+  return reply?.translations?.[normalizedTarget] || reply?.text || "";
+}
+
 function mergeStudents(remoteStudents = []) {
   const byName = new Map(defaultStudents.map((student) => [student.name, { ...student }]));
   remoteStudents.forEach((student) => {
@@ -775,6 +780,14 @@ function getSelectedStudents() {
   return students.filter((student) => selectedStudentIds.has(getStudentId(student)));
 }
 
+function getStudentForCheckin(checkin) {
+  return students.find((student) => (
+    getStudentId(student) === checkin.studentId ||
+    student.loginId === checkin.studentId ||
+    student.name === checkin.studentName
+  ));
+}
+
 function renderRecipientSummary() {
   const summary = $("#recipientSummary");
   if (!summary) return;
@@ -817,6 +830,7 @@ function renderTeacherCheckins() {
     const sourceLabel = languageNames[normalizeLanguage(checkin.sourceLangCode || checkin.sourceLang || "ko")] || "원문";
     const helpText = checkin.help ? "도움 요청" : "일반 기록";
     const reply = checkin.reply?.text || "";
+    const replyStatus = checkin.reply?.text ? "저장된 답장" : "새 답장";
     const row = document.createElement("tr");
     row.className = "checkin-row";
     row.innerHTML = `
@@ -827,8 +841,8 @@ function renderTeacherCheckins() {
       <td><span class="tag ${checkin.help ? "danger" : ""}">${helpText}</span></td>
       <td>
         <div class="reply-cell">
-          <p>${reply ? escapeHtml(reply) : "아직 답장이 없습니다."}</p>
-          <textarea class="reply-input" data-checkin-index="${index}" placeholder="학생에게 보낼 답장을 입력하세요.">${escapeHtml(reply)}</textarea>
+          <p><strong>${replyStatus}</strong>${reply ? `<br>${escapeHtml(reply)}` : "<br>아직 답장이 없습니다."}</p>
+          <textarea class="reply-input" data-checkin-index="${index}" placeholder="학생에게 보낼 답장을 입력하세요."></textarea>
           <button class="secondary reply-save" type="button" data-checkin-index="${index}">답장 저장</button>
         </div>
       </td>
@@ -853,8 +867,9 @@ function renderStudentCheckinHistory() {
     const createdAt = formatDateTime(checkin.createdAt, "저장됨");
     const replyDate = formatDateTime(checkin.reply?.createdAt, "");
     const viewerText = getCheckinTranslation(checkin, getViewerLanguageCode());
+    const replyText = getReplyTranslation(checkin.reply, getViewerLanguageCode());
     const replyHtml = checkin.reply?.text
-      ? `<div class="teacher-reply"><strong>${escapeHtml(checkin.reply.teacherName || "선생님")} 답장 <small>${escapeHtml(replyDate)}</small></strong><p>${escapeHtml(checkin.reply.text)}</p></div>`
+      ? `<div class="teacher-reply"><strong>${escapeHtml(checkin.reply.teacherName || "선생님")} 답장 <small>${escapeHtml(replyDate)}</small></strong><p>${escapeHtml(replyText)}</p></div>`
       : `<div class="teacher-reply waiting"><strong>선생님 답장</strong><p>아직 답장이 없습니다.</p></div>`;
     return `
       <article class="reply-card checkin-history-card">
@@ -876,26 +891,48 @@ async function saveCheckinReply(index) {
   const checkins = getCheckins();
   const checkin = checkins[index];
   const input = $(`.reply-input[data-checkin-index="${index}"]`);
+  const button = $(`.reply-save[data-checkin-index="${index}"]`);
   const text = input?.value.trim();
   if (!checkin || !text) return showToast("답장 내용을 입력해 주세요.");
-  const reply = {
-    text,
-    teacherId: currentUser?.loginId || "teacher",
-    teacherName: currentUser?.name || "교사",
-    createdAt: new Date().toISOString()
-  };
-  checkin.reply = reply;
-  recentCheckins = checkins;
-  saveJson(STORAGE_KEYS.checkins, checkins);
-  if (firebaseAvailable && checkin.id) {
-    await updateDoc(doc(db, "checkins", checkin.id), {
-      reply,
-      updatedAt: serverTimestamp()
-    });
+  const sourceLangCode = getViewerLanguageCode();
+  if (button) {
+    button.disabled = true;
+    button.textContent = "저장 중";
   }
-  renderTeacherCheckins();
-  renderStudentDashboard();
-  showToast("학생에게 답장을 보내고 저장했습니다.");
+  try {
+    const translations = await translateMessageText(text, sourceLangCode);
+    const reply = {
+      text,
+      translations,
+      sourceLangCode,
+      teacherId: currentUser?.loginId || "teacher",
+      teacherName: currentUser?.name || "교사",
+      createdAt: new Date().toISOString()
+    };
+    checkin.reply = reply;
+    recentCheckins = checkins;
+    saveJson(STORAGE_KEYS.checkins, checkins);
+    if (firebaseAvailable && checkin.id) {
+      await updateDoc(doc(db, "checkins", checkin.id), {
+        reply,
+        updatedAt: serverTimestamp()
+      });
+    }
+    if (input) input.value = "";
+    renderTeacherCheckins();
+    renderStudentDashboard();
+    const student = getStudentForCheckin(checkin);
+    const studentLang = student ? getStudentLanguageCode(student) : normalizeLanguage(checkin.sourceLangCode || "ko");
+    showToast(`${checkin.studentName || "학생"}에게 답장을 보내고 저장했습니다. 학생 화면에는 ${languageNames[studentLang]}로 표시됩니다.`);
+  } catch (error) {
+    console.error(error);
+    showToast("답장 저장 중 오류가 발생했습니다. Firebase 연결을 확인해 주세요.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "답장 저장";
+    }
+  }
 }
 
 function updateStats() {
