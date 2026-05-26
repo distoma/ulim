@@ -436,6 +436,30 @@ function getReplyTranslation(reply, targetCode) {
   return reply?.translations?.[normalizedTarget] || reply?.text || "";
 }
 
+function isCheckinReplyMessage(message) {
+  return message?.type === "checkinReply";
+}
+
+function applyReplyMessagesToCheckins(checkins) {
+  const replyMessages = getMessages().filter(isCheckinReplyMessage);
+  replyMessages.forEach((message) => {
+    const checkin = checkins.find((item) => (
+      (message.checkinId && item.id === message.checkinId) ||
+      (message.studentId && item.studentId === message.studentId && item.text === message.checkinText)
+    ));
+    if (!checkin) return;
+    checkin.reply = {
+      text: message.text,
+      translations: message.translations,
+      sourceLangCode: message.sourceLangCode,
+      teacherId: message.senderId,
+      teacherName: message.name || "교사",
+      createdAt: message.createdAt
+    };
+  });
+  return checkins;
+}
+
 function mergeStudents(remoteStudents = []) {
   const byName = new Map(defaultStudents.map((student) => [student.name, { ...student }]));
   remoteStudents.forEach((student) => {
@@ -643,6 +667,7 @@ function renderMessages() {
   const viewerLanguageCode = getViewerLanguageCode();
   const messages = getMessages()
     .filter(canViewMessage)
+    .filter((message) => !isCheckinReplyMessage(message))
     .filter((message) => activeFilter === "all" || message.lang === activeFilter);
   box.innerHTML = "";
   messages.forEach((message) => {
@@ -677,6 +702,7 @@ function renderStudentTeacherMessages() {
   const viewerLanguageCode = getViewerLanguageCode();
   const teacherMessages = getMessages()
     .filter((message) => message.senderRole === "teacher" || message.type === "teacher")
+    .filter((message) => !isCheckinReplyMessage(message))
     .filter(canViewMessage)
     .slice(-10)
     .reverse();
@@ -811,7 +837,8 @@ function renderRecipientControls() {
 }
 
 function getCheckins() {
-  return recentCheckins.length ? recentCheckins : loadJson(STORAGE_KEYS.checkins, []);
+  const checkins = recentCheckins.length ? recentCheckins : loadJson(STORAGE_KEYS.checkins, []);
+  return applyReplyMessagesToCheckins(checkins);
 }
 
 function renderTeacherCheckins() {
@@ -912,18 +939,43 @@ async function saveCheckinReply(index) {
     checkin.reply = reply;
     recentCheckins = checkins;
     saveJson(STORAGE_KEYS.checkins, checkins);
-    if (firebaseAvailable && checkin.id) {
-      await updateDoc(doc(db, "checkins", checkin.id), {
-        reply,
-        updatedAt: serverTimestamp()
-      });
+    const replyMessage = {
+      type: "checkinReply",
+      title: "체크인 답장",
+      name: reply.teacherName,
+      senderId: reply.teacherId,
+      senderRole: "teacher",
+      recipients: [checkin.studentId || "demo"],
+      recipientNames: [checkin.studentName || "학생"],
+      checkinId: checkin.id || null,
+      checkinText: checkin.text || "",
+      studentId: checkin.studentId || "demo",
+      studentName: checkin.studentName || "학생",
+      lang: languageKoreanNames[sourceLangCode],
+      sourceLangCode,
+      text,
+      translations,
+      createdAt: reply.createdAt
+    };
+    const messages = getMessages();
+    messages.push(replyMessage);
+    saveJson(STORAGE_KEYS.messages, messages);
+    let persistedToCloud = false;
+    if (firebaseAvailable) {
+      try {
+        await addDoc(collection(db, "messages"), { ...replyMessage, createdAt: serverTimestamp() });
+        persistedToCloud = true;
+      } catch (error) {
+        console.warn("Failed to persist check-in reply message to Firestore.", error);
+      }
     }
     if (input) input.value = "";
     renderTeacherCheckins();
     renderStudentDashboard();
     const student = getStudentForCheckin(checkin);
     const studentLang = student ? getStudentLanguageCode(student) : normalizeLanguage(checkin.sourceLangCode || "ko");
-    showToast(`${checkin.studentName || "학생"}에게 답장을 보내고 저장했습니다. 학생 화면에는 ${languageNames[studentLang]}로 표시됩니다.`);
+    const storageText = firebaseAvailable && !persistedToCloud ? "브라우저에 임시 저장했습니다." : "저장했습니다.";
+    showToast(`${checkin.studentName || "학생"}에게 답장을 보냈고 ${storageText} 학생 화면에는 ${languageNames[studentLang]}로 표시됩니다.`);
   } catch (error) {
     console.error(error);
     showToast("답장 저장 중 오류가 발생했습니다. Firebase 연결을 확인해 주세요.");
