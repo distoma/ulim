@@ -663,6 +663,7 @@ let studentLanguageFilter = "all";
 let studentStatusFilter = "all";
 let selectedStudentIds = new Set();
 const pendingShopTranslationIds = new Set();
+let editingShopItemId = null;
 
 const firebaseReady = Object.values(firebaseConfig).every(Boolean);
 async function setupFirebase() {
@@ -883,7 +884,13 @@ function getShopItems() {
   getMessages().filter(isShopItemMessage).forEach((item) => {
     const itemId = item.itemId || item.id;
     if (!itemId) return;
-    itemMap.set(itemId, { ...itemMap.get(itemId), ...item, id: itemId, active: item.active !== false });
+    itemMap.set(itemId, {
+      ...itemMap.get(itemId),
+      ...item,
+      id: itemId,
+      itemId,
+      active: item.active !== false
+    });
   });
   return [...itemMap.values()]
     .filter((item) => item.active !== false)
@@ -927,6 +934,16 @@ function getShopCategoryLabel(category, languageCode = getViewerLanguageCode()) 
   return category || "상점 물건";
 }
 
+function normalizeShopCategory(category) {
+  const map = {
+    "활동 특권": "privilege",
+    "학용품": "supply",
+    "학급 경험": "experience",
+    "쿠폰": "coupon"
+  };
+  return map[category] || category || "privilege";
+}
+
 function getShopItemName(item, languageCode = getViewerLanguageCode()) {
   const normalized = normalizeLanguage(languageCode);
   return item.nameTranslations?.[normalized] || item.itemNameTranslations?.[normalized] || item.translations?.[normalized] || item.nameTranslations?.ko || item.itemNameTranslations?.ko || item.name || item.itemName || "상점 물건";
@@ -935,6 +952,14 @@ function getShopItemName(item, languageCode = getViewerLanguageCode()) {
 function getShopItemDescription(item, languageCode = getViewerLanguageCode()) {
   const normalized = normalizeLanguage(languageCode);
   return item.descriptionTranslations?.[normalized] || item.descriptionTranslations?.ko || item.description || "";
+}
+
+function getShopItemRawName(item) {
+  return item.name || item.nameTranslations?.ko || item.itemName || "상점 물건";
+}
+
+function getShopItemRawDescription(item) {
+  return item.description || item.descriptionTranslations?.ko || "";
 }
 
 function shopItemNeedsTranslation(item, languageCode) {
@@ -1397,10 +1422,20 @@ function renderTeacherStore() {
             <strong>${escapeHtml(formatUlim(item.price))}</strong>
           </div>
           <small>구매 ${getItemPurchaseCount(item.id)}건</small>
+          <div class="store-actions">
+            <button class="secondary edit-shop-item" type="button" data-item-id="${escapeHtml(item.id)}">수정</button>
+            <button class="secondary danger delete-shop-item" type="button" data-item-id="${escapeHtml(item.id)}">삭제</button>
+          </div>
         </article>
       `;
     }).join("");
   }
+  $$(".edit-shop-item").forEach((button) => {
+    button.addEventListener("click", () => startEditShopItem(button.dataset.itemId));
+  });
+  $$(".delete-shop-item").forEach((button) => {
+    button.addEventListener("click", () => deleteShopItem(button.dataset.itemId));
+  });
   const purchases = getShopPurchases();
   if (!purchases.length) {
     purchaseList.innerHTML = `<p class="muted">아직 학생 구매 내역이 없습니다.</p>`;
@@ -1856,7 +1891,8 @@ async function addShopItem() {
     button.disabled = true;
     button.textContent = "번역 중";
   }
-  const itemId = `shop-${Date.now()}`;
+  const wasEditing = Boolean(editingShopItemId);
+  const itemId = editingShopItemId || `shop-${Date.now()}`;
   try {
     const nameTranslations = await translateMessageText(name, "ko");
     const descriptionTranslations = description ? await translateMessageText(description, "ko") : buildTranslationBundle("", "ko");
@@ -1877,6 +1913,7 @@ async function addShopItem() {
       senderRole: "teacher",
       sourceLangCode: "ko",
       text: `${name} · ${price} 울림`,
+      updatedAt: editingShopItemId ? new Date().toISOString() : null,
       createdAt: new Date().toISOString()
     };
     const messages = getMessages();
@@ -1894,15 +1931,76 @@ async function addShopItem() {
     $("#shopItemPrice").value = "";
     $("#shopItemStock").value = "-1";
     $("#shopItemDescription").value = "";
+    resetShopForm();
     renderTeacherStore();
     renderStudentStore();
-    showToast("학급 상점에 판매 물건을 올렸습니다.");
+    showToast(wasEditing ? "판매 물건을 수정했습니다." : "학급 상점에 판매 물건을 올렸습니다.");
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "상점에 올리기";
+      button.textContent = editingShopItemId ? "수정 저장" : "상점에 올리기";
     }
   }
+}
+
+function startEditShopItem(itemId) {
+  const item = getShopItems().find((candidate) => candidate.id === itemId);
+  if (!item) return showToast("수정할 물건을 찾을 수 없습니다.");
+  editingShopItemId = itemId;
+  $("#shopFormTitle").textContent = "판매 물건 수정";
+  $("#shopItemName").value = getShopItemRawName(item);
+  $("#shopItemPrice").value = Number(item.price || 0);
+  $("#shopItemStock").value = Number(item.stock ?? -1);
+  $("#shopItemCategory").value = normalizeShopCategory(item.category);
+  $("#shopItemDescription").value = getShopItemRawDescription(item);
+  $("#addShopItem").textContent = "수정 저장";
+  $("#cancelShopEdit").hidden = false;
+  location.hash = "#teacher-store";
+  showToast(`${getShopItemRawName(item)} 물건을 수정합니다.`);
+}
+
+function resetShopForm() {
+  editingShopItemId = null;
+  $("#shopFormTitle").textContent = "판매 물건 올리기";
+  $("#addShopItem").textContent = "상점에 올리기";
+  $("#cancelShopEdit").hidden = true;
+}
+
+async function deleteShopItem(itemId) {
+  const item = getShopItems().find((candidate) => candidate.id === itemId);
+  if (!item) return showToast("삭제할 물건을 찾을 수 없습니다.");
+  if (!confirm(`${getShopItemRawName(item)} 물건을 삭제할까요?`)) return;
+  const deletedItem = {
+    ...item,
+    id: itemId,
+    itemId,
+    type: "shopItem",
+    active: false,
+    deletedAt: new Date().toISOString(),
+    deletedBy: currentUser?.loginId || "teacher",
+    createdAt: new Date().toISOString()
+  };
+  const messages = getMessages();
+  messages.push(deletedItem);
+  saveJson(STORAGE_KEYS.messages, messages);
+  if (firebaseAvailable) {
+    try {
+      await addDoc(collection(db, "messages"), { ...deletedItem, createdAt: serverTimestamp() });
+    } catch (error) {
+      console.warn("Failed to persist deleted shop item.", error);
+      showToast("삭제 기록을 브라우저에 임시 저장했습니다. Firebase 권한을 확인해 주세요.");
+    }
+  }
+  if (editingShopItemId === itemId) {
+    $("#shopItemName").value = "";
+    $("#shopItemPrice").value = "";
+    $("#shopItemStock").value = "-1";
+    $("#shopItemDescription").value = "";
+    resetShopForm();
+  }
+  renderTeacherStore();
+  renderStudentStore();
+  showToast(`${getShopItemRawName(item)} 물건을 삭제했습니다.`);
 }
 
 async function buyShopItem(itemId) {
@@ -2046,6 +2144,14 @@ function setupEvents() {
   });
   $("#sendTeacherMessage").addEventListener("click", sendTeacherMessage);
   $("#addShopItem").addEventListener("click", addShopItem);
+  $("#cancelShopEdit").addEventListener("click", () => {
+    $("#shopItemName").value = "";
+    $("#shopItemPrice").value = "";
+    $("#shopItemStock").value = "-1";
+    $("#shopItemDescription").value = "";
+    resetShopForm();
+    showToast("상점 물건 수정을 취소했습니다.");
+  });
   $("#generateDoc").addEventListener("click", generateDoc);
   $("#copyDoc").addEventListener("click", copyDoc);
 }

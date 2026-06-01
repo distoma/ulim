@@ -280,7 +280,7 @@
       </div>
       <div class="teacher-store-layout">
         <article class="notice-card store-form-card">
-          <h3>판매 물건 올리기</h3>
+          <h3 id="shopFormTitle">판매 물건 올리기</h3>
           <label>이름<input id="shopItemName" placeholder="예: 자리 선택권" /></label>
           <label>가격<input id="shopItemPrice" type="number" min="1" step="1" placeholder="예: 80" /></label>
           <label>재고<input id="shopItemStock" type="number" step="1" placeholder="-1은 무제한" value="-1" /></label>
@@ -294,6 +294,7 @@
           </label>
           <label>설명<textarea id="shopItemDescription" placeholder="학생에게 보여줄 설명을 입력하세요."></textarea></label>
           <button class="primary full" id="addShopItem" type="button">상점에 올리기</button>
+          <button class="secondary full" id="cancelShopEdit" type="button" hidden>수정 취소</button>
         </article>
         <article class="table-card">
           <h3>판매 목록</h3>
