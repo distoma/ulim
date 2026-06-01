@@ -96,14 +96,14 @@
     <section class="panel student-panel role-section" id="student" data-section-role="student">
       <div class="section-head">
         <p class="eyebrow">Student Support</p>
-        <h2>학생 도움 공간</h2>
-        <p>모국어 선택, 하루 체크인, 비공개 상담 요청, 학교생활 안내를 한곳에서 제공합니다.</p>
+        <h2 id="studentSupportTitle">학생 도움 공간</h2>
+        <p id="studentSupportDescription">모국어 선택, 하루 체크인, 비공개 상담 요청, 학교생활 안내를 한곳에서 제공합니다.</p>
       </div>
       <div class="support-grid">
-        <article class="feature"><span class="feature-icon">말</span><h3>모국어 안내</h3><p>한국어, 베트남어, 중국어, 영어, 몽골어, 필리핀어 예시 문구를 제공합니다.</p></article>
-        <article class="feature"><span class="feature-icon">맘</span><h3>정서 체크인</h3><p>오늘의 기분과 힘든 일을 기록하고 필요하면 담임교사에게 도움을 요청합니다.</p></article>
-        <article class="feature"><span class="feature-icon">길</span><h3>학교생활 가이드</h3><p>급식, 준비물, 출결, 상담, 방과후 안내를 쉬운 말로 정리합니다.</p></article>
-        <article class="feature"><span class="feature-icon">쉼</span><h3>비공개 상담</h3><p>학생이 원할 때 교사에게만 보이는 상담 요청을 남길 수 있습니다.</p></article>
+        <article class="feature"><span class="feature-icon" id="featureLangIcon">말</span><h3 id="featureLangTitle">모국어 안내</h3><p id="featureLangText">한국어, 베트남어, 중국어, 영어, 몽골어, 필리핀어 예시 문구를 제공합니다.</p></article>
+        <article class="feature"><span class="feature-icon" id="featureMoodIcon">맘</span><h3 id="featureMoodTitle">정서 체크인</h3><p id="featureMoodText">오늘의 기분과 힘든 일을 기록하고 필요하면 담임교사에게 도움을 요청합니다.</p></article>
+        <article class="feature"><span class="feature-icon" id="featureGuideIcon">길</span><h3 id="featureGuideTitle">학교생활 가이드</h3><p id="featureGuideText">급식, 준비물, 출결, 상담, 방과후 안내를 쉬운 말로 정리합니다.</p></article>
+        <article class="feature"><span class="feature-icon" id="featurePrivateIcon">쉼</span><h3 id="featurePrivateTitle">비공개 상담</h3><p id="featurePrivateText">학생이 원할 때 교사에게만 보이는 상담 요청을 남길 수 있습니다.</p></article>
       </div>
 
       <div class="checkin-box">
@@ -118,27 +118,27 @@
       </div>
       <div class="bank-box">
         <div>
-          <h3>울림 성장 통장</h3>
-          <p class="muted">체크인과 소통 활동을 쌓아 나의 성장 기록을 확인합니다.</p>
+          <h3 id="bankTitle">울림 성장 통장</h3>
+          <p class="muted" id="bankDescription">체크인과 소통 활동을 쌓아 나의 성장 기록을 확인합니다.</p>
         </div>
         <div class="bank-summary">
           <strong id="bankBalance">0 울림</strong>
-          <span>현재 잔액</span>
+          <span id="bankBalanceLabel">현재 잔액</span>
         </div>
         <div class="bank-rules" id="bankRules"></div>
         <div class="bank-history" id="bankHistory"></div>
       </div>
       <div class="teacher-message-box">
         <div>
-          <h3>선생님 메시지</h3>
-          <p class="muted">선생님이 나에게 보낸 메시지를 내 모국어로 확인할 수 있습니다.</p>
+          <h3 id="teacherMessagesTitle">선생님 메시지</h3>
+          <p class="muted" id="teacherMessagesDescription">선생님이 나에게 보낸 메시지를 내 모국어로 확인할 수 있습니다.</p>
         </div>
         <div class="reply-list" id="studentTeacherMessages"></div>
       </div>
       <div class="reply-box">
         <div>
-          <h3>내 체크인 기록과 선생님 답장</h3>
-          <p class="muted">내가 남긴 체크인과 선생님이 보낸 답장을 함께 확인할 수 있습니다.</p>
+          <h3 id="historyTitle">내 체크인 기록과 선생님 답장</h3>
+          <p class="muted" id="historyDescription">내가 남긴 체크인과 선생님이 보낸 답장을 함께 확인할 수 있습니다.</p>
         </div>
         <div class="reply-list" id="studentCheckinHistory"></div>
       </div>
@@ -147,8 +147,8 @@
     <section class="panel alt role-section" id="lounge" data-section-role="student">
       <div class="section-head">
         <p class="eyebrow">Multilingual Lounge</p>
-        <h2>다국어 학생 소통 라운지</h2>
-        <p>학생들이 각자의 언어로 말하고, 번역 보조 문구와 문화 질문을 통해 서로를 이해하도록 설계했습니다.</p>
+        <h2 id="loungeTitle">다국어 학생 소통 라운지</h2>
+        <p id="loungeDescription">학생들이 각자의 언어로 말하고, 번역 보조 문구와 문화 질문을 통해 서로를 이해하도록 설계했습니다.</p>
       </div>
       <div class="lounge-layout">
         <div class="chat-card">
@@ -176,7 +176,7 @@
           </div>
         </div>
         <aside class="culture-card">
-          <h3>문화 질문 카드</h3>
+          <h3 id="cultureTitle">문화 질문 카드</h3>
           <p id="cultureQuestion">우리 학교 급식 시간에는 어떻게 줄을 서면 좋을까요?</p>
           <button class="secondary" id="nextQuestion" type="button">다른 질문 보기</button>
         </aside>

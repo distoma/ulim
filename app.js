@@ -246,11 +246,198 @@ const checkinTextTranslations = {
   }
 };
 const bankRewardRules = [
-  { type: "checkin", title: "오늘 체크인", amount: 30, description: "하루 마음 기록을 남기면 적립" },
-  { type: "helpCheckin", title: "도움 요청", amount: 50, description: "도움이 필요하다고 표현하면 추가 격려" },
-  { type: "loungeMessage", title: "라운지 소통", amount: 15, description: "친구들과 다국어로 소통하면 적립" },
-  { type: "teacherReply", title: "선생님 답장 확인", amount: 10, description: "교사 피드백이 연결되면 적립" }
+  {
+    type: "checkin",
+    title: { ko: "오늘 체크인", en: "Daily Check-in", ja: "今日のチェックイン", zh: "今日签到", vi: "Điểm danh hôm nay", th: "เช็กอินวันนี้", mn: "Өнөөдрийн тэмдэглэл", ru: "Сегодняшняя отметка" },
+    amount: 30,
+    description: { ko: "하루 마음 기록을 남기면 적립", en: "Earn this by writing today's feelings.", ja: "今日の気持ちを書くと貯まります。", zh: "记录今天的心情即可获得。", vi: "Nhận điểm khi viết cảm xúc hôm nay.", th: "ได้รับเมื่อเขียนความรู้สึกวันนี้", mn: "Өнөөдрийн сэтгэлээ бичвэл авна.", ru: "Начисляется за запись настроения дня." }
+  },
+  {
+    type: "helpCheckin",
+    title: { ko: "도움 요청", en: "Help Request", ja: "助けの依頼", zh: "请求帮助", vi: "Yêu cầu giúp đỡ", th: "ขอความช่วยเหลือ", mn: "Тусламж хүсэх", ru: "Просьба о помощи" },
+    amount: 50,
+    description: { ko: "도움이 필요하다고 표현하면 추가 격려", en: "Extra support when you say you need help.", ja: "助けが必要だと伝えると追加で貯まります。", zh: "表达需要帮助时可获得额外鼓励。", vi: "Được cộng thêm khi em nói cần giúp đỡ.", th: "ได้เพิ่มเมื่อบอกว่าต้องการความช่วยเหลือ", mn: "Тусламж хэрэгтэйгээ хэлбэл нэмэлт урамшуулал.", ru: "Дополнительно за просьбу о помощи." }
+  },
+  {
+    type: "loungeMessage",
+    title: { ko: "라운지 소통", en: "Lounge Talk", ja: "ラウンジ交流", zh: "交流区沟通", vi: "Giao tiếp ở phòng chung", th: "สื่อสารในห้องรวม", mn: "Булан дахь харилцаа", ru: "Общение в зоне" },
+    amount: 15,
+    description: { ko: "친구들과 다국어로 소통하면 적립", en: "Earn this by communicating with friends.", ja: "友だちと多言語で交流すると貯まります。", zh: "和朋友多语言交流即可获得。", vi: "Nhận điểm khi giao tiếp với bạn bè.", th: "ได้รับเมื่อสื่อสารกับเพื่อน", mn: "Найзуудтайгаа харилцвал авна.", ru: "Начисляется за общение с друзьями." }
+  },
+  {
+    type: "teacherReply",
+    title: { ko: "선생님 답장 확인", en: "Teacher Reply", ja: "先生の返信", zh: "老师回复", vi: "Trả lời của thầy cô", th: "คำตอบจากครู", mn: "Багшийн хариу", ru: "Ответ учителя" },
+    amount: 10,
+    description: { ko: "교사 피드백이 연결되면 적립", en: "Earn this when teacher feedback is connected.", ja: "先生のフィードバックがつながると貯まります。", zh: "收到老师反馈时可获得。", vi: "Nhận điểm khi có phản hồi từ thầy cô.", th: "ได้รับเมื่อมีข้อเสนอแนะจากครู", mn: "Багшийн санал холбогдвол авна.", ru: "Начисляется при ответе учителя." }
+  }
 ];
+const studentUiTranslations = {
+  heroTitle: {
+    ko: "오늘의 마음과 궁금한 점을 편안하게 나눠요.",
+    en: "Share today's feelings and questions comfortably.",
+    ja: "今日の気持ちや質問を安心して話しましょう。",
+    zh: "安心分享今天的心情和疑问。",
+    vi: "Hãy thoải mái chia sẻ cảm xúc và điều em thắc mắc hôm nay.",
+    th: "แบ่งปันความรู้สึกและคำถามของวันนี้ได้อย่างสบายใจ",
+    mn: "Өнөөдрийн сэтгэл, асуултаа тайван хуваалцаарай.",
+    ru: "Спокойно делитесь чувствами и вопросами дня."
+  },
+  heroText: {
+    ko: "모국어로 체크인하고 친구들과 대화하며 학교생활에 필요한 도움을 받을 수 있습니다.",
+    en: "Check in, talk with friends, and get school support in your home language.",
+    ja: "母語でチェックインし、友だちと話し、学校生活に必要な助けを受けられます。",
+    zh: "可以用母语签到、和朋友交流，并获得学校生活所需的帮助。",
+    vi: "Em có thể điểm danh cảm xúc, trò chuyện với bạn bè và nhận hỗ trợ đời sống trường học bằng tiếng mẹ đẻ.",
+    th: "เช็กอิน พูดคุยกับเพื่อน และรับความช่วยเหลือเรื่องชีวิตในโรงเรียนด้วยภาษาแม่",
+    mn: "Эх хэлээрээ тэмдэглэл хийж, найзуудтайгаа ярилцаж, сургуулийн амьдралд хэрэгтэй тусламж авна.",
+    ru: "Делайте отметки, общайтесь с друзьями и получайте школьную поддержку на родном языке."
+  },
+  quickTitle: { ko: "학생용 빠른 작업", en: "Student Quick Actions", ja: "学生用クイック操作", zh: "学生快捷操作", vi: "Thao tác nhanh cho học sinh", th: "งานด่วนสำหรับนักเรียน", mn: "Сурагчийн хурдан үйлдэл", ru: "Быстрые действия ученика" },
+  quickItemMood: { ko: "기분 체크하고 도움 요청하기", en: "Check feelings and ask for help", ja: "気持ちを確認して助けを求める", zh: "查看心情并请求帮助", vi: "Kiểm tra cảm xúc và nhờ giúp đỡ", th: "เช็กความรู้สึกและขอความช่วยเหลือ", mn: "Сэтгэлээ шалгаж тусламж хүсэх", ru: "Отметить настроение и попросить помощи" },
+  quickItemGreeting: { ko: "친구에게 내 언어로 인사하기", en: "Greet friends in my language", ja: "自分の言語で友だちにあいさつする", zh: "用我的语言向朋友问好", vi: "Chào bạn bằng ngôn ngữ của em", th: "ทักทายเพื่อนด้วยภาษาของฉัน", mn: "Өөрийн хэлээр найзуудтайгаа мэндлэх", ru: "Поздороваться с друзьями на своем языке" },
+  quickItemCulture: { ko: "문화 질문 카드로 이야기하기", en: "Talk with a culture question card", ja: "文化質問カードで話す", zh: "用文化问题卡交流", vi: "Trò chuyện bằng thẻ câu hỏi văn hóa", th: "คุยด้วยการ์ดคำถามวัฒนธรรม", mn: "Соёлын асуултын картаар ярилцах", ru: "Обсудить карточку культурного вопроса" },
+  heroPrimaryAction: { ko: "체크인 하기", en: "Check In", ja: "チェックインする", zh: "签到", vi: "Điểm danh", th: "เช็กอิน", mn: "Тэмдэглэх", ru: "Отметиться" },
+  heroSecondaryAction: { ko: "라운지 가기", en: "Go to Lounge", ja: "ラウンジへ", zh: "前往交流区", vi: "Vào phòng chung", th: "ไปห้องรวม", mn: "Булан руу очих", ru: "В зону общения" },
+  studentSupportTitle: {
+    ko: "학생 도움 공간",
+    en: "Student Support Space",
+    ja: "学生サポートスペース",
+    zh: "学生帮助空间",
+    vi: "Không gian hỗ trợ học sinh",
+    th: "พื้นที่ช่วยเหลือนักเรียน",
+    mn: "Сурагчийн дэмжлэгийн орон зай",
+    ru: "Пространство поддержки ученика"
+  },
+  studentSupportDescription: {
+    ko: "모국어 선택, 하루 체크인, 비공개 상담 요청, 학교생활 안내를 한곳에서 제공합니다.",
+    en: "Choose your home language, check in, ask privately for help, and find school-life guidance in one place.",
+    ja: "母語の選択、毎日のチェックイン、非公開相談、学校生活の案内を一か所で確認できます。",
+    zh: "可以在这里选择母语、每日签到、私下请求帮助并查看学校生活指南。",
+    vi: "Em có thể chọn tiếng mẹ đẻ, điểm danh cảm xúc, nhờ hỗ trợ riêng và xem hướng dẫn đời sống trường học tại một nơi.",
+    th: "เลือกภาษาแม่ เช็กอินประจำวัน ขอคำปรึกษาส่วนตัว และดูคำแนะนำชีวิตในโรงเรียนได้ในที่เดียว",
+    mn: "Эх хэлээ сонгож, өдөр тутмын тэмдэглэл хийж, нууцаар тусламж хүсэж, сургуулийн амьдралын зааврыг нэг дор харна.",
+    ru: "Здесь можно выбрать родной язык, сделать ежедневную отметку, попросить помощи лично и посмотреть школьные подсказки."
+  },
+  featureLangTitle: { ko: "모국어 안내", en: "Home-language Guide", ja: "母語案内", zh: "母语指南", vi: "Hướng dẫn bằng tiếng mẹ đẻ", th: "คำแนะนำภาษาแม่", mn: "Эх хэлний заавар", ru: "Подсказки на родном языке" },
+  featureLangText: {
+    ko: "한국어, 베트남어, 중국어, 영어, 몽골어 등 여러 언어로 안내를 확인합니다.",
+    en: "Check guidance in Korean, Vietnamese, Chinese, English, Mongolian, and more.",
+    ja: "韓国語、ベトナム語、中国語、英語、モンゴル語などで案内を確認できます。",
+    zh: "可以用韩语、越南语、中文、英语、蒙古语等查看说明。",
+    vi: "Xem hướng dẫn bằng tiếng Hàn, tiếng Việt, tiếng Trung, tiếng Anh, tiếng Mông Cổ và nhiều ngôn ngữ khác.",
+    th: "ดูคำแนะนำเป็นภาษาเกาหลี เวียดนาม จีน อังกฤษ มองโกเลีย และภาษาอื่น ๆ",
+    mn: "Солонгос, вьетнам, хятад, англи, монгол зэрэг хэлээр заавар харна.",
+    ru: "Смотрите подсказки на корейском, вьетнамском, китайском, английском, монгольском и других языках."
+  },
+  featureLangIcon: { ko: "말", en: "Hi", ja: "話", zh: "语", vi: "Nói", th: "พูด", mn: "Үг", ru: "Речь" },
+  featureMoodTitle: { ko: "정서 체크인", en: "Feeling Check-in", ja: "気持ちチェックイン", zh: "情绪签到", vi: "Điểm danh cảm xúc", th: "เช็กอินความรู้สึก", mn: "Сэтгэлийн тэмдэглэл", ru: "Отметка настроения" },
+  featureMoodText: {
+    ko: "오늘의 기분과 어려움을 기록하고 필요하면 선생님에게 도움을 요청합니다.",
+    en: "Record today's feelings and difficulties, and ask your teacher for help when needed.",
+    ja: "今日の気持ちや困ったことを記録し、必要なら先生に助けを求めます。",
+    zh: "记录今天的心情和困难，需要时向老师求助。",
+    vi: "Ghi lại cảm xúc và điều khó khăn hôm nay, khi cần có thể nhờ thầy cô giúp.",
+    th: "บันทึกความรู้สึกและเรื่องยากวันนี้ และขอความช่วยเหลือจากครูเมื่อจำเป็น",
+    mn: "Өнөөдрийн сэтгэл, хэцүү зүйлээ бичиж, хэрэгтэй бол багшаас тусламж хүснэ.",
+    ru: "Записывайте настроение и трудности дня, а при необходимости просите учителя о помощи."
+  },
+  featureMoodIcon: { ko: "맘", en: "Feel", ja: "心", zh: "心", vi: "Tâm", th: "ใจ", mn: "Сэт", ru: "Душа" },
+  featureGuideTitle: { ko: "학교생활 가이드", en: "School-life Guide", ja: "学校生活ガイド", zh: "学校生活指南", vi: "Hướng dẫn đời sống trường học", th: "คู่มือชีวิตในโรงเรียน", mn: "Сургуулийн амьдралын заавар", ru: "Гид по школьной жизни" },
+  featureGuideText: {
+    ko: "급식, 준비물, 출결, 상담, 방과후 안내를 쉬운 말로 정리합니다.",
+    en: "Lunch, supplies, attendance, counseling, and after-school notices are explained simply.",
+    ja: "給食、持ち物、出欠、相談、放課後案内をやさしい言葉で整理します。",
+    zh: "用简单的话整理午餐、准备物、出勤、咨询和课后通知。",
+    vi: "Giải thích đơn giản về bữa ăn, đồ cần chuẩn bị, điểm danh, tư vấn và hoạt động sau giờ học.",
+    th: "สรุปเรื่องอาหารกลางวัน ของที่ต้องเตรียม การมาเรียน การปรึกษา และกิจกรรมหลังเลิกเรียนด้วยภาษาง่าย ๆ",
+    mn: "Үдийн хоол, бэлтгэх зүйл, ирц, зөвлөгөө, хичээлийн дараах мэдээллийг энгийнээр тайлбарлана.",
+    ru: "Простыми словами объясняет обед, принадлежности, посещаемость, консультации и занятия после уроков."
+  },
+  featureGuideIcon: { ko: "길", en: "Map", ja: "道", zh: "路", vi: "Đường", th: "ทาง", mn: "Зам", ru: "Путь" },
+  featurePrivateTitle: { ko: "비공개 상담", en: "Private Help", ja: "非公開相談", zh: "私下咨询", vi: "Tư vấn riêng", th: "ปรึกษาส่วนตัว", mn: "Нууц зөвлөгөө", ru: "Личная помощь" },
+  featurePrivateText: {
+    ko: "학생이 원할 때 교사에게만 보이는 상담 요청을 남길 수 있습니다.",
+    en: "Leave a help request that only your teacher can see.",
+    ja: "必要なとき、先生だけに見える相談リクエストを残せます。",
+    zh: "需要时可以留下只有老师能看到的求助请求。",
+    vi: "Khi cần, em có thể để lại yêu cầu tư vấn chỉ thầy cô nhìn thấy.",
+    th: "เมื่อจำเป็น สามารถฝากคำขอปรึกษาที่มีแต่ครูเท่านั้นที่เห็น",
+    mn: "Хэрэгтэй үед зөвхөн багш харах тусламжийн хүсэлт үлдээж болно.",
+    ru: "Можно оставить просьбу о помощи, которую увидит только учитель."
+  },
+  featurePrivateIcon: { ko: "쉼", en: "Care", ja: "休", zh: "安", vi: "Yên", th: "พัก", mn: "Амр", ru: "Тихо" },
+  bankTitle: { ko: "울림 성장 통장", en: "ULIM Growth Bank", ja: "ウリム成長通帳", zh: "ULIM 成长存折", vi: "Sổ tiết kiệm trưởng thành ULIM", th: "บัญชีการเติบโต ULIM", mn: "ULIM өсөлтийн данс", ru: "Копилка роста ULIM" },
+  bankDescription: {
+    ko: "체크인과 소통 활동을 쌓아 나의 성장 기록을 확인합니다.",
+    en: "Build a record of growth through check-ins and communication.",
+    ja: "チェックインとコミュニケーション活動を積み重ね、成長記録を確認します。",
+    zh: "通过签到和沟通活动积累自己的成长记录。",
+    vi: "Tích lũy hoạt động điểm danh và giao tiếp để xem quá trình trưởng thành của em.",
+    th: "สะสมการเช็กอินและการสื่อสารเพื่อดูบันทึกการเติบโตของตนเอง",
+    mn: "Тэмдэглэл, харилцааны үйлдлээр өсөлтийн бүртгэлээ харна.",
+    ru: "Накопите записи роста через отметки и общение."
+  },
+  bankBalanceLabel: { ko: "현재 잔액", en: "Current Balance", ja: "現在の残高", zh: "当前余额", vi: "Số dư hiện tại", th: "ยอดคงเหลือปัจจุบัน", mn: "Одоогийн үлдэгдэл", ru: "Текущий баланс" },
+  teacherMessagesTitle: { ko: "선생님 메시지", en: "Teacher Messages", ja: "先生からのメッセージ", zh: "老师消息", vi: "Tin nhắn từ thầy cô", th: "ข้อความจากครู", mn: "Багшийн зурвас", ru: "Сообщения учителя" },
+  teacherMessagesDescription: {
+    ko: "선생님이 나에게 보낸 메시지를 내 모국어로 확인할 수 있습니다.",
+    en: "Read messages from your teacher in your selected home language.",
+    ja: "先生からのメッセージを選んだ母語で確認できます。",
+    zh: "可以用选择的母语查看老师发来的消息。",
+    vi: "Xem tin nhắn thầy cô gửi bằng tiếng mẹ đẻ em đã chọn.",
+    th: "อ่านข้อความจากครูเป็นภาษาแม่ที่เลือกไว้",
+    mn: "Багшаас ирсэн зурвасыг сонгосон эх хэлээрээ уншина.",
+    ru: "Читайте сообщения учителя на выбранном родном языке."
+  },
+  historyTitle: { ko: "내 체크인 기록과 선생님 답장", en: "My Check-ins and Teacher Replies", ja: "自分のチェックインと先生の返信", zh: "我的签到和老师回复", vi: "Điểm danh của em và trả lời của thầy cô", th: "เช็กอินของฉันและคำตอบจากครู", mn: "Миний тэмдэглэл ба багшийн хариу", ru: "Мои отметки и ответы учителя" },
+  historyDescription: {
+    ko: "내가 남긴 체크인과 선생님이 보낸 답장을 함께 확인할 수 있습니다.",
+    en: "Review your check-ins together with your teacher's replies.",
+    ja: "自分のチェックインと先生からの返信を一緒に確認できます。",
+    zh: "可以一起查看自己的签到和老师的回复。",
+    vi: "Xem lại điểm danh của em cùng với trả lời của thầy cô.",
+    th: "ดูเช็กอินของตนเองพร้อมคำตอบจากครู",
+    mn: "Өөрийн тэмдэглэл болон багшийн хариуг хамт харна.",
+    ru: "Просматривайте свои отметки вместе с ответами учителя."
+  },
+  loungeTitle: { ko: "다국어 학생 소통 라운지", en: "Multilingual Student Lounge", ja: "多言語学生ラウンジ", zh: "多语言学生交流区", vi: "Phòng giao tiếp đa ngôn ngữ", th: "ห้องสื่อสารหลายภาษา", mn: "Олон хэлний сурагчдын булан", ru: "Многоязычная зона общения" },
+  loungeDescription: {
+    ko: "학생들이 각자의 언어로 말하고, 번역 보조 문구와 문화 질문을 통해 서로를 이해하도록 설계했습니다.",
+    en: "Students can speak in their own languages and understand each other through translations and culture questions.",
+    ja: "学生が自分の言語で話し、翻訳補助文や文化質問で互いを理解できるようにしました。",
+    zh: "学生可以用自己的语言交流，并通过翻译和文化问题互相理解。",
+    vi: "Học sinh có thể nói bằng ngôn ngữ của mình và hiểu nhau qua bản dịch và câu hỏi văn hóa.",
+    th: "นักเรียนพูดด้วยภาษาของตนเอง และเข้าใจกันผ่านคำแปลและคำถามวัฒนธรรม",
+    mn: "Сурагчид өөрийн хэлээр ярьж, орчуулга болон соёлын асуултаар бие биенээ ойлгоно.",
+    ru: "Ученики говорят на своих языках и понимают друг друга через переводы и вопросы о культуре."
+  },
+  cultureTitle: { ko: "문화 질문 카드", en: "Culture Question Card", ja: "文化質問カード", zh: "文化问题卡", vi: "Thẻ câu hỏi văn hóa", th: "การ์ดคำถามวัฒนธรรม", mn: "Соёлын асуултын карт", ru: "Карточка культурного вопроса" },
+  nextQuestion: { ko: "다른 질문 보기", en: "Show Another Question", ja: "別の質問を見る", zh: "查看其他问题", vi: "Xem câu hỏi khác", th: "ดูคำถามอื่น", mn: "Өөр асуулт харах", ru: "Другой вопрос" },
+  messagePlaceholder: {
+    ko: "친구들에게 인사하거나 궁금한 점을 적어 보세요",
+    en: "Say hello to friends or write a question.",
+    ja: "友だちにあいさつしたり、気になることを書いてください。",
+    zh: "向朋友打招呼，或写下想问的问题。",
+    vi: "Chào bạn bè hoặc viết điều em thắc mắc.",
+    th: "ทักทายเพื่อนหรือเขียนสิ่งที่สงสัย",
+    mn: "Найзуудтайгаа мэндэлж эсвэл асуух зүйлээ бичээрэй.",
+    ru: "Поздоровайтесь с друзьями или напишите вопрос."
+  },
+  send: { ko: "보내기", en: "Send", ja: "送信", zh: "发送", vi: "Gửi", th: "ส่ง", mn: "Илгээх", ru: "Отправить" },
+  sameLanguageNotice: { ko: "내 모국어로 작성된 글입니다.", en: "This was written in my home language.", ja: "自分の母語で書かれた文です。", zh: "这是用我的母语写的内容。", vi: "Bài viết này được viết bằng tiếng mẹ đẻ của em.", th: "ข้อความนี้เขียนด้วยภาษาแม่ของฉัน", mn: "Энэ миний эх хэлээр бичигдсэн.", ru: "Это написано на моем родном языке." },
+  translationLabel: { ko: "번역", en: "translation", ja: "翻訳", zh: "翻译", vi: "bản dịch", th: "คำแปล", mn: "орчуулга", ru: "перевод" },
+  teacherMessageDefaultTitle: { ko: "선생님 메시지", en: "Teacher Message", ja: "先生からのメッセージ", zh: "老师消息", vi: "Tin nhắn từ thầy cô", th: "ข้อความจากครู", mn: "Багшийн зурвас", ru: "Сообщение учителя" },
+  teacherDefaultName: { ko: "선생님", en: "Teacher", ja: "先生", zh: "老师", vi: "Thầy cô", th: "ครู", mn: "Багш", ru: "Учитель" },
+  senderLabel: { ko: "보낸 사람", en: "From", ja: "送信者", zh: "发送人", vi: "Người gửi", th: "ผู้ส่ง", mn: "Илгээсэн хүн", ru: "Отправитель" },
+  teacherMessageEmpty: { ko: "아직 선생님에게 받은 메시지가 없습니다.", en: "No teacher messages yet.", ja: "先生からのメッセージはまだありません。", zh: "还没有收到老师的消息。", vi: "Chưa có tin nhắn từ thầy cô.", th: "ยังไม่มีข้อความจากครู", mn: "Багшаас зурвас хараахан алга.", ru: "Пока нет сообщений от учителя." },
+  bankEmpty: { ko: "아직 통장 기록이 없습니다. 체크인부터 시작해 보세요.", en: "No bank records yet. Start with a check-in.", ja: "通帳記録はまだありません。チェックインから始めましょう。", zh: "还没有存折记录。先从签到开始吧。", vi: "Chưa có ghi chép trong sổ. Hãy bắt đầu bằng điểm danh cảm xúc.", th: "ยังไม่มีประวัติบัญชี เริ่มจากการเช็กอินได้เลย", mn: "Дансны бүртгэл хараахан алга. Тэмдэглэлээс эхлээрэй.", ru: "Пока нет записей. Начните с отметки." },
+  noCheckins: { ko: "아직 남긴 체크인 기록이 없습니다.", en: "You do not have any check-ins yet.", ja: "まだチェックイン記録がありません。", zh: "还没有签到记录。", vi: "Em chưa có ghi chép điểm danh.", th: "ยังไม่มีบันทึกเช็กอิน", mn: "Тэмдэглэл хараахан алга.", ru: "Пока нет отметок." },
+  teacherReplyLabel: { ko: "선생님 답장", en: "Teacher Reply", ja: "先生の返信", zh: "老师回复", vi: "Trả lời của thầy cô", th: "คำตอบจากครู", mn: "Багшийн хариу", ru: "Ответ учителя" },
+  replyWaiting: { ko: "아직 답장이 없습니다.", en: "No reply yet.", ja: "まだ返信はありません。", zh: "还没有回复。", vi: "Chưa có trả lời.", th: "ยังไม่มีคำตอบ", mn: "Хариу хараахан алга.", ru: "Ответа пока нет." },
+  originalLabel: { ko: "원문", en: "Original", ja: "原文", zh: "原文", vi: "Bản gốc", th: "ต้นฉบับ", mn: "Эх бичвэр", ru: "Оригинал" },
+  helpRequestedLabel: { ko: "도움 요청함", en: "Asked for help", ja: "助けを依頼", zh: "已请求帮助", vi: "Đã nhờ giúp đỡ", th: "ขอความช่วยเหลือแล้ว", mn: "Тусламж хүссэн", ru: "Попросил(а) помощи" },
+  regularRecordLabel: { ko: "일반 기록", en: "Regular record", ja: "通常記録", zh: "普通记录", vi: "Ghi chép thường", th: "บันทึกทั่วไป", mn: "Энгийн тэмдэглэл", ru: "Обычная запись" }
+};
 const defaultMessages = [
   { name: "린", lang: "베트남어", sourceLangCode: "vi", text: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
   { name: "민수", lang: "한국어", sourceLangCode: "ko", text: "방과후 교실은 2층 도서실 옆에서 시작해요." },
@@ -393,9 +580,30 @@ function applyMenuLanguage(languageCode = "ko") {
   });
   const appLanguage = $("#appLanguage");
   if (appLanguage) appLanguage.value = normalized;
+  applyStudentLanguage(normalized);
   applyCheckinLanguage(normalized);
+  if (currentUser?.role) renderHero(currentUser.role);
   renderMessages();
   renderStudentDashboard();
+}
+
+function applyStudentLanguage(languageCode = "ko") {
+  const normalized = normalizeLanguage(languageCode);
+  Object.entries(studentUiTranslations).forEach(([id, translations]) => {
+    const targetId = id === "messagePlaceholder" ? "messageInput" : id === "send" ? "sendMessage" : id;
+    const element = $(`#${targetId}`);
+    if (!element) return;
+    const text = translations[normalized] || translations.ko;
+    if (id === "messagePlaceholder") element.placeholder = text;
+    else element.textContent = text;
+  });
+}
+
+function getStudentUiText(key, languageCode = getViewerLanguageCode()) {
+  const translations = studentUiTranslations[key];
+  if (!translations) return "";
+  const normalized = normalizeLanguage(languageCode);
+  return translations[normalized] || translations.ko;
 }
 
 function applyCheckinLanguage(languageCode = "ko") {
@@ -409,6 +617,8 @@ function applyCheckinLanguage(languageCode = "ko") {
 }
 
 function getViewerLanguageCode() {
+  const appLanguage = $("#appLanguage")?.value;
+  if (document.body.classList.contains("logged-in") && appLanguage) return normalizeLanguage(appLanguage);
   return normalizeLanguage(currentUser?.languageCode || $("#loginLanguage")?.value || "ko");
 }
 
@@ -672,18 +882,23 @@ function applyRoleView(role) {
 
 function renderHero(role) {
   const teacher = role === "teacher";
-  $("#heroTitle").textContent = teacher ? "교사 업무와 학생 지원을 한 화면에서 관리합니다." : "오늘의 마음과 궁금한 점을 편안하게 나눠요.";
+  const viewerLanguageCode = getViewerLanguageCode();
+  $("#heroTitle").textContent = teacher ? "교사 업무와 학생 지원을 한 화면에서 관리합니다." : getStudentUiText("heroTitle", viewerLanguageCode);
   $("#heroText").textContent = teacher
     ? "도움 요청 학생을 먼저 확인하고, 선택한 학생에게 번역 메시지와 행정 문서 초안을 빠르게 준비할 수 있습니다."
-    : "모국어로 체크인하고 친구들과 대화하며 학교생활에 필요한 도움을 받을 수 있습니다.";
-  $("#quickTitle").textContent = teacher ? "교사용 빠른 작업" : "학생용 빠른 작업";
+    : getStudentUiText("heroText", viewerLanguageCode);
+  $("#quickTitle").textContent = teacher ? "교사용 빠른 작업" : getStudentUiText("quickTitle", viewerLanguageCode);
   const items = teacher
     ? ["도움 요청 학생 확인", "선택 학생에게 메시지 보내기", "AI 행정 문서 초안 생성"]
-    : ["기분 체크하고 도움 요청하기", "친구에게 내 언어로 인사하기", "문화 질문 카드로 이야기하기"];
+    : [
+      getStudentUiText("quickItemMood", viewerLanguageCode),
+      getStudentUiText("quickItemGreeting", viewerLanguageCode),
+      getStudentUiText("quickItemCulture", viewerLanguageCode)
+    ];
   $("#todayList").innerHTML = items.map((item, index) => `<li><span>${index + 1}</span>${item}</li>`).join("");
   $("#heroActions").innerHTML = teacher
     ? `<a class="primary" href="#teacher">학생 관리 보기</a><a class="secondary" href="#ai-docs">AI 행정 문서</a>`
-    : `<a class="primary" href="#student">체크인 하기</a><a class="secondary" href="#lounge">라운지 가기</a>`;
+    : `<a class="primary" href="#student">${escapeHtml(getStudentUiText("heroPrimaryAction", viewerLanguageCode))}</a><a class="secondary" href="#lounge">${escapeHtml(getStudentUiText("heroSecondaryAction", viewerLanguageCode))}</a>`;
 }
 
 async function refreshFirebaseData() {
@@ -745,12 +960,15 @@ function renderMessages() {
     const sourceLabel = languageNames[sourceCode] || message.lang || "원문";
     const viewerLabel = languageNames[viewerLanguageCode] || "한국어";
     const sameLanguage = sourceCode === viewerLanguageCode;
+    const metaText = sameLanguage
+      ? getStudentUiText("sameLanguageNotice", viewerLanguageCode)
+      : `${viewerLabel} ${getStudentUiText("translationLabel", viewerLanguageCode)} / ${getStudentUiText("originalLabel", viewerLanguageCode)}(${sourceLabel}): ${message.text}`;
     const item = document.createElement("article");
     item.className = "msg";
     item.innerHTML = `
       <strong>${escapeHtml(message.title || message.name)}<small>${escapeHtml(sourceLabel)}</small></strong>
       <p>${escapeHtml(translatedText)}</p>
-      <small>${escapeHtml(sameLanguage ? "내 모국어로 작성된 글입니다." : `${viewerLabel} 번역 / 원문(${sourceLabel}): ${message.text}`)}</small>
+      <small>${escapeHtml(metaText)}</small>
     `;
     box.appendChild(item);
   });
@@ -776,7 +994,7 @@ function renderStudentTeacherMessages() {
     .slice(-10)
     .reverse();
   if (!teacherMessages.length) {
-    list.innerHTML = `<p class="muted">아직 선생님에게 받은 메시지가 없습니다.</p>`;
+    list.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("teacherMessageEmpty", viewerLanguageCode))}</p>`;
     return;
   }
   list.innerHTML = teacherMessages.map((message) => {
@@ -784,9 +1002,9 @@ function renderStudentTeacherMessages() {
     const translatedText = getMessageTranslation(message, viewerLanguageCode);
     return `
       <article class="reply-card teacher-message-card">
-        <strong>${escapeHtml(message.title || "선생님 메시지")} <small>${escapeHtml(sentAt)}</small></strong>
+        <strong>${escapeHtml(message.title || getStudentUiText("teacherMessageDefaultTitle", viewerLanguageCode))} <small>${escapeHtml(sentAt)}</small></strong>
         <p>${escapeHtml(translatedText)}</p>
-        <small>보낸 사람: ${escapeHtml(message.name || "선생님")}</small>
+        <small>${escapeHtml(getStudentUiText("senderLabel", viewerLanguageCode))}: ${escapeHtml(message.name || getStudentUiText("teacherDefaultName", viewerLanguageCode))}</small>
       </article>
     `;
   }).join("");
@@ -798,23 +1016,24 @@ function renderStudentBank() {
   const history = $("#bankHistory");
   if (!balance || !rules || !history) return;
   const studentId = currentUser?.loginId || "demo";
+  const viewerLanguageCode = getViewerLanguageCode();
   const transactions = getStudentBankTransactions(studentId);
   balance.textContent = `${getStudentBankBalance(studentId).toLocaleString("ko-KR")} 울림`;
   rules.innerHTML = bankRewardRules.map((rule) => `
     <article class="bank-rule">
       <strong>+${rule.amount}</strong>
-      <span>${escapeHtml(rule.title)}</span>
-      <small>${escapeHtml(rule.description)}</small>
+      <span>${escapeHtml(rule.title[viewerLanguageCode] || rule.title.ko)}</span>
+      <small>${escapeHtml(rule.description[viewerLanguageCode] || rule.description.ko)}</small>
     </article>
   `).join("");
   if (!transactions.length) {
-    history.innerHTML = `<p class="muted">아직 통장 기록이 없습니다. 체크인부터 시작해 보세요.</p>`;
+    history.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("bankEmpty", viewerLanguageCode))}</p>`;
     return;
   }
   history.innerHTML = transactions.slice(0, 8).map((item) => `
     <article class="bank-entry">
       <span>+${Number(item.amount || 0).toLocaleString("ko-KR")} 울림</span>
-      <strong>${escapeHtml(item.reason || "활동 적립")}</strong>
+      <strong>${escapeHtml(bankRewardRules.find((rule) => rule.type === item.activityType)?.title[viewerLanguageCode] || item.reason || "활동 적립")}</strong>
       <small>${escapeHtml(formatDateTime(item.createdAt, "방금 전"))}</small>
     </article>
   `).join("");
@@ -982,25 +1201,26 @@ function renderTeacherCheckins() {
 function renderStudentCheckinHistory() {
   const list = $("#studentCheckinHistory");
   if (!list) return;
+  const viewerLanguageCode = getViewerLanguageCode();
   const checkins = getStudentCheckins();
   if (!checkins.length) {
-    list.innerHTML = `<p class="muted">아직 남긴 체크인 기록이 없습니다.</p>`;
+    list.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("noCheckins", viewerLanguageCode))}</p>`;
     return;
   }
   list.innerHTML = checkins.map((checkin) => {
     const mood = getMoodByKey(checkin.moodKey || checkin.mood);
     const createdAt = formatDateTime(checkin.createdAt, "저장됨");
     const replyDate = formatDateTime(checkin.reply?.createdAt, "");
-    const viewerText = getCheckinTranslation(checkin, getViewerLanguageCode());
-    const replyText = getReplyTranslation(checkin.reply, getViewerLanguageCode());
+    const viewerText = getCheckinTranslation(checkin, viewerLanguageCode);
+    const replyText = getReplyTranslation(checkin.reply, viewerLanguageCode);
     const replyHtml = checkin.reply?.text
-      ? `<div class="teacher-reply"><strong>${escapeHtml(checkin.reply.teacherName || "선생님")} 답장 <small>${escapeHtml(replyDate)}</small></strong><p>${escapeHtml(replyText)}</p></div>`
-      : `<div class="teacher-reply waiting"><strong>선생님 답장</strong><p>아직 답장이 없습니다.</p></div>`;
+      ? `<div class="teacher-reply"><strong>${escapeHtml(getStudentUiText("teacherReplyLabel", viewerLanguageCode))} <small>${escapeHtml(replyDate)}</small></strong><p>${escapeHtml(replyText)}</p></div>`
+      : `<div class="teacher-reply waiting"><strong>${escapeHtml(getStudentUiText("teacherReplyLabel", viewerLanguageCode))}</strong><p>${escapeHtml(getStudentUiText("replyWaiting", viewerLanguageCode))}</p></div>`;
     return `
       <article class="reply-card checkin-history-card">
         <strong>${escapeHtml(mood.ko)} <small>${escapeHtml(createdAt)}</small></strong>
         <p>${escapeHtml(viewerText)}</p>
-        <small>원문: ${escapeHtml(checkin.text || "내용 없음")} · ${checkin.help ? "도움 요청함" : "일반 기록"}</small>
+        <small>${escapeHtml(getStudentUiText("originalLabel", viewerLanguageCode))}: ${escapeHtml(checkin.text || "내용 없음")} · ${escapeHtml(checkin.help ? getStudentUiText("helpRequestedLabel", viewerLanguageCode) : getStudentUiText("regularRecordLabel", viewerLanguageCode))}</small>
         ${replyHtml}
       </article>
     `;
@@ -1189,7 +1409,7 @@ async function sendMessage() {
     showToast("라운지에 메시지를 보냈습니다.");
   } finally {
     sendButton.disabled = false;
-    sendButton.textContent = "보내기";
+    sendButton.textContent = getStudentUiText("send");
   }
 }
 
@@ -1285,12 +1505,12 @@ function setupEvents() {
   $("#logoutBtn").addEventListener("click", logout);
   $("#appLanguage").addEventListener("change", (event) => {
     const languageCode = normalizeLanguage(event.target.value);
-    applyMenuLanguage(languageCode);
     if (currentUser) {
       currentUser.languageCode = languageCode;
       currentUser.language = languageNames[languageCode];
       saveJson(STORAGE_KEYS.session, currentUser);
     }
+    applyMenuLanguage(languageCode);
     showToast(`${languageNames[languageCode]} 메뉴로 바뀌었습니다.`);
   });
   $("#studentLanguageFilter").addEventListener("change", (event) => {
