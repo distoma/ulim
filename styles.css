@@ -629,6 +629,23 @@ td small {
 
 .form-card { display: grid; gap: 14px; align-content: start; }
 .form-card label { display: grid; gap: 8px; font-weight: 900; }
+.doc-analysis-card, .doc-checklist {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.doc-analysis-card strong, .doc-checklist strong {
+  color: var(--ink);
+}
+.doc-checklist ul {
+  margin: 0;
+  padding-left: 18px;
+}
 pre { white-space: pre-wrap; background: #f7f9fb; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; line-height: 1.65; min-height: 120px; overflow: auto; }
 .doc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .doc-toolbar h3 { margin: 0; }

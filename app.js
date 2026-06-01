@@ -649,6 +649,38 @@ const cultureQuestions = [
   "한국 학교에서 처음 어려웠던 점을 친구와 어떻게 나누면 좋을까요?",
   "우리 반에서 새 친구가 편안해지도록 할 수 있는 작은 행동은 무엇일까요?"
 ];
+const documentTypeGuides = {
+  "가정통신문": {
+    purpose: "가정에 안내할 핵심 사항을 쉬운 문장으로 전달",
+    sections: ["제목", "인사말", "목적", "일시/장소", "대상", "세부 안내", "준비물", "문의처", "번역 안내"],
+    checks: ["학부모가 바로 이해할 쉬운 한국어", "날짜와 제출 기한", "가정 협조 사항", "다국어 번역 필요 여부"]
+  },
+  "업무추진 계획": {
+    purpose: "학교 업무의 목적, 추진 절차, 역할, 일정을 체계적으로 정리",
+    sections: ["추진 배경", "목적", "방침", "세부 추진 내용", "역할 분담", "예산/물품", "기대 효과"],
+    checks: ["담당자와 협조 부서", "추진 일정", "예산 또는 필요 물품", "성과 확인 방법"]
+  },
+  "교육주간 운영계획": {
+    purpose: "교육주간의 전체 운영 흐름과 프로그램을 한눈에 정리",
+    sections: ["운영 개요", "목표", "기간", "대상", "세부 프로그램", "홍보/가정 연계", "안전 유의사항", "평가"],
+    checks: ["일자별 프로그램", "장소와 담당자", "학생 참여 방식", "안전 및 출결 관리"]
+  },
+  "학생 학습자료 제작": {
+    purpose: "학생 수준과 언어 배경을 고려한 학습자료 구성",
+    sections: ["학습 목표", "핵심 개념", "쉬운 설명", "활동 과제", "예시", "확인 문제", "모국어 도움말"],
+    checks: ["학년 수준", "핵심 어휘", "그림/예시 필요 여부", "모국어 병기 또는 쉬운 한국어"]
+  },
+  "상담 계획서": {
+    purpose: "학생 상황을 살피고 후속 지원을 연결",
+    sections: ["상담 목적", "학생 현황", "상담 일정", "주요 질문", "지원 계획", "가정 연계", "후속 확인"],
+    checks: ["개인정보 최소화", "통역 필요 여부", "상담 후 조치", "보호자 안내 방식"]
+  },
+  "다문화 학생 지원 계획": {
+    purpose: "이주 배경학생의 학교 적응과 언어 지원을 체계화",
+    sections: ["학생 현황", "지원 목표", "언어 지원", "또래 관계", "가정 연계", "교과 지원", "점검 일정"],
+    checks: ["학생 모국어", "한국어 수준", "담임/전담 역할", "학부모 소통 방법"]
+  }
+};
 
 let db = null;
 let currentUser = null;
@@ -1160,6 +1192,7 @@ async function enterApp(user) {
   renderTeacherCheckins();
   renderStudentDashboard();
   renderTeacherStore();
+  renderDocumentWorkflow();
   updateStats();
   location.hash = user.role === "teacher" ? "#teacher" : "#student";
 }
@@ -2070,14 +2103,99 @@ async function generateDoc() {
   const date = $("#docDate").value || "추후 안내";
   const target = $("#docTarget").value.trim() || "이주 배경학생 및 학부모";
   const prompt = $("#docPrompt").value.trim() || "학생의 언어 배경을 고려하여 쉬운 한국어 안내와 번역 지원을 함께 제공합니다.";
-  const result = `${type}\n\n1. 목적\n${target}의 학교생활 적응과 가정-학교 소통을 지원하기 위함.\n\n2. 일정\n${date}\n\n3. 대상\n${target}\n\n4. 주요 내용\n${prompt}\n\n5. 다국어 지원 계획\n- 쉬운 한국어 안내문 제공\n- 필요 시 베트남어, 중국어, 영어, 몽골어, 필리핀어 번역본 제공\n- 학생이 이해하기 어려운 표현은 그림, 예시, 짧은 문장으로 보완\n\n6. 교사 확인 사항\n- 도움 요청 학생 우선 확인\n- 학부모 연락 필요 여부 점검\n- 상담 기록 및 후속 지원 일정 등록\n\n7. AI/HWP 연동 메모\n분석 대상 파일: ${file ? file.name : "업로드 문서 없음"}\n실제 배포 시에는 서버에서 HWP/HWPX를 텍스트로 변환하고, 개인정보 비식별화 후 AI API로 초안을 생성하도록 연결합니다.`;
+  const guide = getDocumentTypeGuide(type);
+  const fileAnalysis = analyzeUploadedDocument(file);
+  const result = `${type} HWPX 문서 생성 조건 정리
+
+1. 업로드 양식 분석
+- 파일명: ${fileAnalysis.name}
+- 파일 형식: ${fileAnalysis.extension}
+- 분석 상태: ${fileAnalysis.status}
+- 양식 확인 항목: ${fileAnalysis.checks.join(", ")}
+
+2. 작업 목적
+- ${guide.purpose}
+
+3. 생성 문서 기본 조건
+- 일정: ${date}
+- 대상: ${target}
+- 핵심 내용: ${prompt}
+
+4. 문서 구성 권장 목차
+${guide.sections.map((section, index) => `${index + 1}. ${section}`).join("\n")}
+
+5. HWPX 생성 전 확인할 조건
+${guide.checks.map((check) => `- ${check}`).join("\n")}
+- 기존 양식의 제목/본문/표/서명란 위치 유지
+- 학교명, 학년, 담당자, 문의처 등 고정 문구 확인
+- 개인정보는 필요한 범위만 사용
+
+6. 이주 배경학생 지원 반영
+- 쉬운 한국어 문장 사용
+- 필요 시 학생/학부모 모국어 번역본 병행
+- 핵심 어휘와 일정은 표 또는 짧은 문장으로 정리
+- 안내 대상이 학생인지 학부모인지 구분
+
+7. 다음 단계
+- 업로드한 HWPX 양식의 구조를 서버에서 파싱
+- 위 조건을 바탕으로 본문 텍스트 생성
+- 원본 양식의 서식은 유지하고 텍스트 영역만 치환
+- 완성본을 새 HWPX 파일로 다운로드하도록 연결`;
   $("#docResult").textContent = result;
-  const documentRecord = { teacherId: currentUser?.loginId || "demo", type, date, target, prompt, result, fileName: file?.name || null, createdAt: new Date().toISOString() };
+  const documentRecord = { teacherId: currentUser?.loginId || "demo", type, date, target, prompt, result, fileName: file?.name || null, fileAnalysis, createdAt: new Date().toISOString() };
   const documents = loadJson(STORAGE_KEYS.documents, []);
   documents.push(documentRecord);
   saveJson(STORAGE_KEYS.documents, documents);
   if (firebaseAvailable) await addDoc(collection(db, "documents"), { ...documentRecord, createdAt: serverTimestamp() });
-  showToast("AI 행정 문서 초안이 생성되었습니다.");
+  showToast("문서 생성 조건을 정리했습니다.");
+}
+
+function getDocumentTypeGuide(type) {
+  return documentTypeGuides[type] || documentTypeGuides["가정통신문"];
+}
+
+function analyzeUploadedDocument(file) {
+  if (!file) {
+    return {
+      name: "업로드 문서 없음",
+      extension: "미확인",
+      status: "기존 양식 없이 새 문서 조건만 정리합니다.",
+      checks: ["제목 위치", "본문 영역", "결재/서명란", "표 삽입 여부"]
+    };
+  }
+  const extension = file.name.split(".").pop()?.toLowerCase() || "미확인";
+  const isHwpx = extension === "hwpx";
+  return {
+    name: file.name,
+    extension: extension.toUpperCase(),
+    status: isHwpx ? "HWPX 양식으로 인식했습니다. 구조 분석과 텍스트 치환 대상으로 사용할 수 있습니다." : "참고 문서로 인식했습니다. 최종 HWPX 생성을 위해서는 HWPX 양식 업로드가 권장됩니다.",
+    checks: isHwpx
+      ? ["문서 XML 구조", "본문 문단", "표/셀", "머리말/꼬리말", "이미지와 서명란"]
+      : ["본문 텍스트", "제목", "표 형식", "서식 참고 요소"]
+  };
+}
+
+function renderDocumentWorkflow() {
+  const type = $("#docType")?.value || "가정통신문";
+  const file = $("#hwpFile")?.files?.[0];
+  const guide = getDocumentTypeGuide(type);
+  const analysis = analyzeUploadedDocument(file);
+  const analysisBox = $("#docAnalysis");
+  const checklist = $("#docChecklist");
+  if (analysisBox) {
+    analysisBox.innerHTML = `
+      <strong>${escapeHtml(analysis.name)}</strong>
+      <span>${escapeHtml(analysis.extension)} · ${escapeHtml(analysis.status)}</span>
+    `;
+  }
+  if (checklist) {
+    checklist.innerHTML = `
+      <strong>${escapeHtml(type)} 생성 조건</strong>
+      <ul>
+        ${guide.checks.map((check) => `<li>${escapeHtml(check)}</li>`).join("")}
+      </ul>
+    `;
+  }
 }
 
 async function copyDoc() {
@@ -2156,6 +2274,8 @@ function setupEvents() {
     resetShopForm();
     showToast("상점 물건 수정을 취소했습니다.");
   });
+  $("#hwpFile").addEventListener("change", renderDocumentWorkflow);
+  $("#docType").addEventListener("change", renderDocumentWorkflow);
   $("#generateDoc").addEventListener("click", generateDoc);
   $("#copyDoc").addEventListener("click", copyDoc);
 }

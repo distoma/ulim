@@ -311,20 +311,31 @@
       <div class="section-head">
         <p class="eyebrow">AI Administrative Assistant</p>
         <h2>AI 행정 문서 생성</h2>
-        <p>한글 문서 분석 흐름을 고려한 프로토타입입니다. 업무명, 일정, 대상, 핵심 내용을 넣으면 행정 문서 초안을 생성합니다.</p>
+        <p>기존 HWPX 양식을 분석하고, 업무 유형별 조건을 정리해 새 행정 문서 생성을 준비합니다.</p>
       </div>
       <div class="ai-workbench">
         <div class="form-card">
-          <label>기존 한글 문서 업로드<input type="file" id="hwpFile" accept=".hwp,.hwpx,.docx,.txt" /></label>
-          <label>업무 종류<select id="docType"><option>가정통신문</option><option>상담 계획서</option><option>체험학습 안내문</option><option>다문화 학생 지원 계획</option><option>학부모 면담 안내</option></select></label>
+          <label>기존 한글 문서 양식 업로드<input type="file" id="hwpFile" accept=".hwpx,.hwp,.docx,.txt" /></label>
+          <div class="doc-analysis-card" id="docAnalysis">HWPX 양식을 업로드하면 파일명, 형식, 예상 분석 항목이 표시됩니다.</div>
+          <label>업무 종류
+            <select id="docType">
+              <option>가정통신문</option>
+              <option>업무추진 계획</option>
+              <option>교육주간 운영계획</option>
+              <option>학생 학습자료 제작</option>
+              <option>상담 계획서</option>
+              <option>다문화 학생 지원 계획</option>
+            </select>
+          </label>
           <label>일정<input type="date" id="docDate" /></label>
           <label>대상 학급<input id="docTarget" placeholder="예: 3학년 2반 이주 배경학생 및 학부모" /></label>
-          <label>핵심 내용<textarea id="docPrompt" placeholder="교사가 원하는 업무 내용, 준비물, 장소, 유의사항 등을 입력하세요."></textarea></label>
-          <button class="primary full" id="generateDoc" type="button">AI 문서 초안 생성</button>
+          <label>핵심 내용<textarea id="docPrompt" placeholder="목적, 운영 내용, 준비물, 장소, 유의사항, 번역 지원 계획 등을 입력하세요."></textarea></label>
+          <div class="doc-checklist" id="docChecklist"></div>
+          <button class="primary full" id="generateDoc" type="button">문서 생성 조건 정리</button>
         </div>
         <article class="doc-output">
-          <div class="doc-toolbar"><h3>생성 문서 초안</h3><button class="secondary" id="copyDoc" type="button">복사</button></div>
-          <pre id="docResult">문서 초안이 여기에 표시됩니다.</pre>
+          <div class="doc-toolbar"><h3>HWPX 생성 준비 결과</h3><button class="secondary" id="copyDoc" type="button">복사</button></div>
+          <pre id="docResult">문서 양식 분석과 생성 조건 정리 결과가 여기에 표시됩니다.</pre>
         </article>
       </div>
     </section>
