@@ -395,6 +395,7 @@ function applyMenuLanguage(languageCode = "ko") {
   if (appLanguage) appLanguage.value = normalized;
   applyCheckinLanguage(normalized);
   renderMessages();
+  renderStudentDashboard();
 }
 
 function applyCheckinLanguage(languageCode = "ko") {
@@ -445,7 +446,12 @@ function getCheckinTranslation(checkin, targetCode) {
 
 function getReplyTranslation(reply, targetCode) {
   const normalizedTarget = normalizeLanguage(targetCode);
-  return reply?.translations?.[normalizedTarget] || reply?.text || "";
+  const sourceText = reply?.text || "";
+  if (!sourceText) return "";
+  if (reply?.translations?.[normalizedTarget]) return reply.translations[normalizedTarget];
+  if (translationMemory[sourceText]?.[normalizedTarget]) return translationMemory[sourceText][normalizedTarget];
+  if (normalizeLanguage(reply?.sourceLangCode || "ko") === normalizedTarget) return sourceText;
+  return `[${languageNames[normalizedTarget]} 자동 번역 준비 중] ${sourceText}`;
 }
 
 function isCheckinReplyMessage(message) {
