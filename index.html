@@ -331,11 +331,15 @@
           <label>대상 학급<input id="docTarget" placeholder="예: 3학년 2반 이주 배경학생 및 학부모" /></label>
           <label>핵심 내용<textarea id="docPrompt" placeholder="목적, 운영 내용, 준비물, 장소, 유의사항, 번역 지원 계획 등을 입력하세요."></textarea></label>
           <div class="doc-checklist" id="docChecklist"></div>
-          <button class="primary full" id="generateDoc" type="button">문서 생성 조건 정리</button>
+          <button class="primary full" id="generateDoc" type="button">한글문서(HWPX) 생성</button>
         </div>
         <article class="doc-output">
           <div class="doc-toolbar"><h3>HWPX 생성 준비 결과</h3><button class="secondary" id="copyDoc" type="button">복사</button></div>
           <pre id="docResult">문서 양식 분석과 생성 조건 정리 결과가 여기에 표시됩니다.</pre>
+          <div class="doc-download" id="docDownloadArea" hidden>
+            <strong>생성된 HWPX 파일</strong>
+            <a class="primary" id="downloadHwpx" href="#" download>한글문서(HWPX) 다운로드</a>
+          </div>
         </article>
       </div>
     </section>

@@ -691,6 +691,7 @@ let recentCheckins = [];
 let firebaseAvailable = false;
 let functionsClient = null;
 let translateMessageCallable = null;
+let generateHwpxCallable = null;
 let studentLanguageFilter = "all";
 let studentStatusFilter = "all";
 let selectedStudentIds = new Set();
@@ -707,6 +708,7 @@ async function setupFirebase() {
   db = getFirestore(app);
   functionsClient = getFunctions(app, translationFunctionRegion);
   translateMessageCallable = httpsCallable(functionsClient, translationFunctionName);
+  generateHwpxCallable = httpsCallable(functionsClient, "generateHwpxDocument");
   firebaseAvailable = true;
   $("#firebaseStatus").textContent = "Firebase Firestore 로그인으로 연결되어 있습니다.";
 }
@@ -2103,8 +2105,48 @@ async function generateDoc() {
   const date = $("#docDate").value || "추후 안내";
   const target = $("#docTarget").value.trim() || "이주 배경학생 및 학부모";
   const prompt = $("#docPrompt").value.trim() || "학생의 언어 배경을 고려하여 쉬운 한국어 안내와 번역 지원을 함께 제공합니다.";
+  const button = $("#generateDoc");
+  const downloadArea = $("#docDownloadArea");
+  const downloadLink = $("#downloadHwpx");
   const guide = getDocumentTypeGuide(type);
   const fileAnalysis = analyzeUploadedDocument(file);
+  if (downloadArea) downloadArea.hidden = true;
+  if (downloadLink?.href?.startsWith("blob:")) URL.revokeObjectURL(downloadLink.href);
+  if (file && file.name.toLowerCase().endsWith(".hwpx") && generateHwpxCallable) {
+    button.disabled = true;
+    button.textContent = "HWPX 생성 중";
+    try {
+      const fileBase64 = await fileToBase64(file);
+      const response = await generateHwpxCallable({
+        fileBase64,
+        fileName: file.name,
+        type,
+        date,
+        target,
+        prompt
+      });
+      const data = response.data;
+      $("#docResult").textContent = `${data.preview}
+
+---
+HWPX 생성 결과
+- 본문 XML: ${data.analysis?.sectionName || "확인됨"}
+- 양식 텍스트 수: ${data.analysis?.extractedTextCount ?? 0}
+- 업무별 학습자료 수: ${data.analysis?.trainingSampleCount ?? 0}
+- 학습자료 폴더: functions-deploy/training-docs/${data.analysis?.trainingFolder || ""}
+`;
+      setHwpxDownload(data.fileBase64, data.fileName || `${type}.hwpx`);
+      saveGeneratedDocumentRecord({ type, date, target, prompt, result: $("#docResult").textContent, fileName: file.name, fileAnalysis, generatedFileName: data.fileName });
+      showToast("한글문서(HWPX)를 생성했습니다.");
+      return;
+    } catch (error) {
+      console.error(error);
+      showToast("HWPX 생성 함수 연결에 실패해 조건 정리 결과를 표시합니다.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "한글문서(HWPX) 생성";
+    }
+  }
   const result = `${type} HWPX 문서 생성 조건 정리
 
 1. 업로드 양식 분석
@@ -2142,11 +2184,7 @@ ${guide.checks.map((check) => `- ${check}`).join("\n")}
 - 원본 양식의 서식은 유지하고 텍스트 영역만 치환
 - 완성본을 새 HWPX 파일로 다운로드하도록 연결`;
   $("#docResult").textContent = result;
-  const documentRecord = { teacherId: currentUser?.loginId || "demo", type, date, target, prompt, result, fileName: file?.name || null, fileAnalysis, createdAt: new Date().toISOString() };
-  const documents = loadJson(STORAGE_KEYS.documents, []);
-  documents.push(documentRecord);
-  saveJson(STORAGE_KEYS.documents, documents);
-  if (firebaseAvailable) await addDoc(collection(db, "documents"), { ...documentRecord, createdAt: serverTimestamp() });
+  await saveGeneratedDocumentRecord({ type, date, target, prompt, result, fileName: file?.name || null, fileAnalysis });
   showToast("문서 생성 조건을 정리했습니다.");
 }
 
@@ -2196,6 +2234,35 @@ function renderDocumentWorkflow() {
       </ul>
     `;
   }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function setHwpxDownload(fileBase64, fileName) {
+  const bytes = Uint8Array.from(atob(fileBase64), (char) => char.charCodeAt(0));
+  const blob = new Blob([bytes], { type: "application/haansofthwpx" });
+  const url = URL.createObjectURL(blob);
+  const downloadArea = $("#docDownloadArea");
+  const downloadLink = $("#downloadHwpx");
+  downloadLink.href = url;
+  downloadLink.download = fileName;
+  downloadLink.textContent = `${fileName} 다운로드`;
+  downloadArea.hidden = false;
+}
+
+async function saveGeneratedDocumentRecord(record) {
+  const documentRecord = { teacherId: currentUser?.loginId || "demo", ...record, createdAt: new Date().toISOString() };
+  const documents = loadJson(STORAGE_KEYS.documents, []);
+  documents.push(documentRecord);
+  saveJson(STORAGE_KEYS.documents, documents);
+  if (firebaseAvailable) await addDoc(collection(db, "documents"), { ...documentRecord, createdAt: serverTimestamp() });
 }
 
 async function copyDoc() {
