@@ -913,8 +913,12 @@ function getItemRemainingStock(item) {
   return Math.max(0, stock - getItemPurchaseCount(item.id));
 }
 
-function formatUlim(amount) {
-  return `${Number(amount || 0).toLocaleString("ko-KR")} 울림`;
+function getUlimUnit(languageCode = getViewerLanguageCode()) {
+  return normalizeLanguage(languageCode) === "ko" ? "울림" : "ULIM";
+}
+
+function formatUlim(amount, languageCode = getViewerLanguageCode()) {
+  return `${Number(amount || 0).toLocaleString("ko-KR")} ${getUlimUnit(languageCode)}`;
 }
 
 function getShopCategoryLabel(category, languageCode = getViewerLanguageCode()) {
@@ -1314,7 +1318,7 @@ function renderStudentBank() {
   const studentId = currentUser?.loginId || "demo";
   const viewerLanguageCode = getViewerLanguageCode();
   const transactions = getStudentBankTransactions(studentId);
-  balance.textContent = `${getStudentBankBalance(studentId).toLocaleString("ko-KR")} 울림`;
+  balance.textContent = formatUlim(getStudentBankBalance(studentId), viewerLanguageCode);
   rules.innerHTML = bankRewardRules.map((rule) => `
     <article class="bank-rule">
       <strong>+${rule.amount}</strong>
@@ -1331,7 +1335,7 @@ function renderStudentBank() {
     const sign = amount > 0 ? "+" : "";
     return `
       <article class="bank-entry">
-        <span class="${amount < 0 ? "negative" : ""}">${sign}${amount.toLocaleString("ko-KR")} 울림</span>
+        <span class="${amount < 0 ? "negative" : ""}">${sign}${Number(Math.abs(amount)).toLocaleString("ko-KR")} ${getUlimUnit(viewerLanguageCode)}</span>
         <strong>${escapeHtml(bankRewardRules.find((rule) => rule.type === item.activityType)?.title[viewerLanguageCode] || item.reason || "활동 적립")}</strong>
         <small>${escapeHtml(formatDateTime(item.createdAt, "방금 전"))}</small>
       </article>
@@ -1350,7 +1354,7 @@ function renderStudentStore() {
   const points = getStudentBankBalance(studentId);
   const items = getShopItems();
   const purchases = getShopPurchases().filter((purchase) => purchase.studentId === studentId || purchase.studentName === currentUser?.name);
-  balance.textContent = formatUlim(points);
+  balance.textContent = formatUlim(points, viewerLanguageCode);
   count.textContent = `${items.length}개`;
   if (!items.length) {
     list.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("storeEmpty", viewerLanguageCode))}</p>`;
@@ -1362,7 +1366,7 @@ function renderStudentStore() {
       const hasStock = remaining === -1 || remaining > 0;
       const canBuy = points >= price && hasStock;
       const buttonText = hasStock ? (points >= price ? getStudentUiText("purchaseButton", viewerLanguageCode) : getStudentUiText("insufficientPoints", viewerLanguageCode)) : getStudentUiText("soldOut", viewerLanguageCode);
-      const stockText = remaining === -1 ? getStudentUiText("unlimitedStock", viewerLanguageCode) : `${remaining}개`;
+      const stockText = remaining === -1 ? getStudentUiText("unlimitedStock", viewerLanguageCode) : `${remaining}`;
       const itemName = getShopItemName(item, viewerLanguageCode);
       const itemDescription = getShopItemDescription(item, viewerLanguageCode);
       return `
@@ -1375,7 +1379,7 @@ function renderStudentStore() {
           <p>${escapeHtml(itemDescription)}</p>
           <div class="store-item-meta">
             <span>${escapeHtml(getStudentUiText("stockLabel", viewerLanguageCode))}: ${escapeHtml(stockText)}</span>
-            <strong>${escapeHtml(formatUlim(price))}</strong>
+            <strong>${escapeHtml(formatUlim(price, viewerLanguageCode))}</strong>
           </div>
           <button class="primary full buy-shop-item" type="button" data-item-id="${escapeHtml(item.id)}" ${canBuy ? "" : "disabled"}>${escapeHtml(buttonText)}</button>
         </article>
@@ -1388,7 +1392,7 @@ function renderStudentStore() {
     history.innerHTML = purchases.slice(0, 6).map((purchase) => `
       <article class="purchase-entry">
         <strong>${escapeHtml(getShopItemName(getShopItems().find((item) => item.id === purchase.itemId) || purchase, viewerLanguageCode))}</strong>
-        <span>${escapeHtml(formatUlim(purchase.totalPrice || purchase.price))}</span>
+        <span>${escapeHtml(formatUlim(purchase.totalPrice || purchase.price, viewerLanguageCode))}</span>
         <small>${escapeHtml(formatDateTime(purchase.createdAt, "방금 전"))} · ${escapeHtml(getStudentUiText("deliveredWaiting", viewerLanguageCode))}</small>
       </article>
     `).join("");
@@ -1483,7 +1487,7 @@ function renderStudents() {
       <div class="student-main">
         <strong>${escapeHtml(student.name)}</strong>
         <small>${escapeHtml(student.grade || "-")} · ${escapeHtml(student.classroom || "-")}</small>
-        <small>통장 ${getStudentBankBalance(studentId).toLocaleString("ko-KR")} 울림</small>
+        <small>통장 ${formatUlim(getStudentBankBalance(studentId), getViewerLanguageCode())}</small>
       </div>
       <div class="student-meta">
         <span>${escapeHtml(student.lang || student.language || "-")}</span>
@@ -2012,7 +2016,7 @@ async function buyShopItem(itemId) {
   const balance = getStudentBankBalance(studentId);
   const remaining = getItemRemainingStock(item);
   if (remaining !== -1 && remaining <= 0) return showToast("재고가 없습니다.");
-  if (balance < price) return showToast(`울림 포인트가 부족합니다. 현재 ${formatUlim(balance)}입니다.`);
+  if (balance < price) return showToast(`포인트가 부족합니다. 현재 ${formatUlim(balance, getViewerLanguageCode())}입니다.`);
   const purchase = {
     id: `purchase-${Date.now()}`,
     type: "shopPurchase",
