@@ -622,6 +622,16 @@ const translationMemory = {
     th: "กิจกรรมชมรมพรุ่งนี้ต้องเตรียมอะไรไปบ้าง",
     mn: "Маргаашийн дугуйлангийн үйл ажиллагаанд юу авчрах вэ?",
     ru: "Что нужно принести на завтрашнее занятие кружка?"
+  },
+  "지우개": {
+    ko: "지우개",
+    en: "Eraser",
+    ja: "消しゴム",
+    zh: "橡皮",
+    vi: "Cục tẩy",
+    th: "ยางลบ",
+    mn: "Баллуур",
+    ru: "Ластик"
   }
 };
 const defaultStudents = [
@@ -652,6 +662,7 @@ let translateMessageCallable = null;
 let studentLanguageFilter = "all";
 let studentStatusFilter = "all";
 let selectedStudentIds = new Set();
+const pendingShopTranslationIds = new Set();
 
 const firebaseReady = Object.values(firebaseConfig).every(Boolean);
 async function setupFirebase() {
@@ -924,6 +935,49 @@ function getShopItemName(item, languageCode = getViewerLanguageCode()) {
 function getShopItemDescription(item, languageCode = getViewerLanguageCode()) {
   const normalized = normalizeLanguage(languageCode);
   return item.descriptionTranslations?.[normalized] || item.descriptionTranslations?.ko || item.description || "";
+}
+
+function shopItemNeedsTranslation(item, languageCode) {
+  const normalized = normalizeLanguage(languageCode);
+  if (normalized === "ko") return false;
+  const hasName = Boolean(item.nameTranslations?.[normalized] || item.itemNameTranslations?.[normalized] || item.translations?.[normalized]);
+  const hasDescription = !item.description || Boolean(item.descriptionTranslations?.[normalized]);
+  return !hasName || !hasDescription;
+}
+
+async function ensureShopItemTranslations(item, languageCode = getViewerLanguageCode()) {
+  const normalized = normalizeLanguage(languageCode);
+  const itemId = item.itemId || item.id || item.name;
+  if (!itemId || pendingShopTranslationIds.has(`${itemId}:${normalized}`) || !shopItemNeedsTranslation(item, normalized)) return;
+  pendingShopTranslationIds.add(`${itemId}:${normalized}`);
+  try {
+    const nameTranslations = item.nameTranslations || item.itemNameTranslations || await translateMessageText(item.name || item.itemName || "상점 물건", "ko");
+    const descriptionTranslations = item.descriptionTranslations || (item.description ? await translateMessageText(item.description, "ko") : buildTranslationBundle("", "ko"));
+    const translatedItem = {
+      ...item,
+      id: itemId,
+      itemId,
+      type: "shopItem",
+      nameTranslations,
+      descriptionTranslations,
+      text: `${item.name || item.itemName || "상점 물건"} · ${item.price || 0} 울림`,
+      translatedAt: new Date().toISOString()
+    };
+    const messages = getMessages();
+    messages.push(translatedItem);
+    saveJson(STORAGE_KEYS.messages, messages);
+    if (firebaseAvailable) {
+      try {
+        await addDoc(collection(db, "messages"), { ...translatedItem, createdAt: serverTimestamp() });
+      } catch (error) {
+        console.warn("Failed to persist translated shop item.", error);
+      }
+    }
+    renderStudentStore();
+    renderTeacherStore();
+  } finally {
+    pendingShopTranslationIds.delete(`${itemId}:${normalized}`);
+  }
 }
 
 async function saveBankTransaction({ studentId, studentName, activityType, amount, reason }) {
@@ -1277,6 +1331,7 @@ function renderStudentStore() {
     list.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("storeEmpty", viewerLanguageCode))}</p>`;
   } else {
     list.innerHTML = items.map((item) => {
+      if (shopItemNeedsTranslation(item, viewerLanguageCode)) ensureShopItemTranslations(item, viewerLanguageCode);
       const price = Number(item.price || 0);
       const remaining = getItemRemainingStock(item);
       const hasStock = remaining === -1 || remaining > 0;
@@ -1787,6 +1842,7 @@ async function sendTeacherMessage() {
 }
 
 async function addShopItem() {
+  const button = $("#addShopItem");
   const name = $("#shopItemName").value.trim();
   const price = Number($("#shopItemPrice").value);
   const stockValue = $("#shopItemStock").value.trim();
@@ -1796,46 +1852,57 @@ async function addShopItem() {
   if (!name) return showToast("판매 물건 이름을 입력해 주세요.");
   if (!Number.isFinite(price) || price <= 0) return showToast("가격은 1 울림 이상으로 입력해 주세요.");
   if (!Number.isFinite(stock)) return showToast("재고는 숫자로 입력해 주세요. 무제한은 -1입니다.");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "번역 중";
+  }
   const itemId = `shop-${Date.now()}`;
-  const nameTranslations = await translateMessageText(name, "ko");
-  const descriptionTranslations = description ? await translateMessageText(description, "ko") : buildTranslationBundle("", "ko");
-  const item = {
-    id: itemId,
-    itemId,
-    type: "shopItem",
-    title: "학급 상점 물건",
-    name,
-    price,
-    stock,
-    category,
-    description,
-    nameTranslations,
-    descriptionTranslations,
-    active: true,
-    senderId: currentUser?.loginId || "teacher",
-    senderRole: "teacher",
-    sourceLangCode: "ko",
-    text: `${name} · ${price} 울림`,
-    createdAt: new Date().toISOString()
-  };
-  const messages = getMessages();
-  messages.push(item);
-  saveJson(STORAGE_KEYS.messages, messages);
-  if (firebaseAvailable) {
-    try {
-      await addDoc(collection(db, "messages"), { ...item, createdAt: serverTimestamp() });
-    } catch (error) {
-      console.warn("Failed to persist shop item.", error);
-      showToast("상점 물건을 브라우저에 임시 저장했습니다. Firebase 권한을 확인해 주세요.");
+  try {
+    const nameTranslations = await translateMessageText(name, "ko");
+    const descriptionTranslations = description ? await translateMessageText(description, "ko") : buildTranslationBundle("", "ko");
+    const item = {
+      id: itemId,
+      itemId,
+      type: "shopItem",
+      title: "학급 상점 물건",
+      name,
+      price,
+      stock,
+      category,
+      description,
+      nameTranslations,
+      descriptionTranslations,
+      active: true,
+      senderId: currentUser?.loginId || "teacher",
+      senderRole: "teacher",
+      sourceLangCode: "ko",
+      text: `${name} · ${price} 울림`,
+      createdAt: new Date().toISOString()
+    };
+    const messages = getMessages();
+    messages.push(item);
+    saveJson(STORAGE_KEYS.messages, messages);
+    if (firebaseAvailable) {
+      try {
+        await addDoc(collection(db, "messages"), { ...item, createdAt: serverTimestamp() });
+      } catch (error) {
+        console.warn("Failed to persist shop item.", error);
+        showToast("상점 물건을 브라우저에 임시 저장했습니다. Firebase 권한을 확인해 주세요.");
+      }
+    }
+    $("#shopItemName").value = "";
+    $("#shopItemPrice").value = "";
+    $("#shopItemStock").value = "-1";
+    $("#shopItemDescription").value = "";
+    renderTeacherStore();
+    renderStudentStore();
+    showToast("학급 상점에 판매 물건을 올렸습니다.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "상점에 올리기";
     }
   }
-  $("#shopItemName").value = "";
-  $("#shopItemPrice").value = "";
-  $("#shopItemStock").value = "-1";
-  $("#shopItemDescription").value = "";
-  renderTeacherStore();
-  renderStudentStore();
-  showToast("학급 상점에 판매 물건을 올렸습니다.");
 }
 
 async function buyShopItem(itemId) {
