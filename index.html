@@ -57,7 +57,9 @@
     <nav class="top-nav" aria-label="주요 메뉴">
       <a href="#student" data-nav-role="student" data-menu-key="student">학생 도움</a>
       <a href="#lounge" data-nav-role="student" data-menu-key="lounge">다국어 대화</a>
+      <a href="#student-store" data-nav-role="student" data-menu-key="studentStore">학급 상점</a>
       <a href="#teacher" data-nav-role="teacher" data-menu-key="teacher">교사 관리</a>
+      <a href="#teacher-store" data-nav-role="teacher" data-menu-key="teacherStore">상점 관리</a>
       <a href="#ai-docs" data-nav-role="teacher" data-menu-key="aiDocs">AI 행정</a>
     </nav>
     <div class="user-tools">
@@ -141,6 +143,32 @@
           <p class="muted" id="historyDescription">내가 남긴 체크인과 선생님이 보낸 답장을 함께 확인할 수 있습니다.</p>
         </div>
         <div class="reply-list" id="studentCheckinHistory"></div>
+      </div>
+    </section>
+
+    <section class="panel role-section" id="student-store" data-section-role="student">
+      <div class="section-head">
+        <p class="eyebrow">Class Store</p>
+        <h2 id="studentStoreTitle">학급 상점</h2>
+        <p id="studentStoreDescription">활동으로 모은 울림 포인트로 선생님이 올린 물건과 특권을 구매할 수 있습니다.</p>
+      </div>
+      <div class="store-layout">
+        <aside class="store-summary">
+          <span id="storeBalanceLabel">사용 가능 포인트</span>
+          <strong id="storeBalance">0 울림</strong>
+          <p id="storeGuide">구매하면 울림 통장에서 포인트가 차감되고 구매 내역이 선생님에게 전달됩니다.</p>
+        </aside>
+        <div>
+          <div class="store-toolbar">
+            <h3 id="storeItemsTitle">판매 중인 물건</h3>
+            <span id="storeCount">0개</span>
+          </div>
+          <div class="store-grid" id="studentStoreItems"></div>
+          <div class="purchase-history-box">
+            <h3 id="purchaseHistoryTitle">내 구매 내역</h3>
+            <div class="purchase-list" id="studentPurchaseHistory"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -244,6 +272,40 @@
       </div>
     </section>
 
+    <section class="panel alt role-section" id="teacher-store" data-section-role="teacher">
+      <div class="section-head">
+        <p class="eyebrow">Class Store Management</p>
+        <h2>학급 상점 관리</h2>
+        <p>학생들이 울림 포인트로 구매할 물건과 활동 특권을 등록하고 구매 내역을 확인합니다.</p>
+      </div>
+      <div class="teacher-store-layout">
+        <article class="notice-card store-form-card">
+          <h3>판매 물건 올리기</h3>
+          <label>이름<input id="shopItemName" placeholder="예: 자리 선택권" /></label>
+          <label>가격<input id="shopItemPrice" type="number" min="1" step="1" placeholder="예: 80" /></label>
+          <label>재고<input id="shopItemStock" type="number" step="1" placeholder="-1은 무제한" value="-1" /></label>
+          <label>분류
+            <select id="shopItemCategory">
+              <option value="privilege">활동 특권</option>
+              <option value="supply">학용품</option>
+              <option value="experience">학급 경험</option>
+              <option value="coupon">쿠폰</option>
+            </select>
+          </label>
+          <label>설명<textarea id="shopItemDescription" placeholder="학생에게 보여줄 설명을 입력하세요."></textarea></label>
+          <button class="primary full" id="addShopItem" type="button">상점에 올리기</button>
+        </article>
+        <article class="table-card">
+          <h3>판매 목록</h3>
+          <div class="store-grid teacher-store-grid" id="teacherShopItems"></div>
+        </article>
+        <article class="table-card purchase-records">
+          <h3>학생 구매 내역</h3>
+          <div class="purchase-list" id="teacherPurchaseList"></div>
+        </article>
+      </div>
+    </section>
+
     <section class="panel alt role-section" id="ai-docs" data-section-role="teacher">
       <div class="section-head">
         <p class="eyebrow">AI Administrative Assistant</p>
@@ -273,7 +335,7 @@
         <p>Firebase 설정값을 넣으면 로그인 계정, 체크인, 메시지, 문서 초안을 Firestore 컬렉션으로 관리합니다.</p>
       </div>
       <div class="schema-grid">
-        <code>accounts/{loginId}</code><code>students/{studentId}</code><code>checkins/{checkinId}</code><code>messages/{messageId}</code><code>documents/{documentId}</code>
+        <code>accounts/{loginId}</code><code>students/{studentId}</code><code>checkins/{checkinId}</code><code>messages/{messageId}</code><code>documents/{documentId}</code><code>messages(type: shopItem/shopPurchase)</code>
       </div>
     </section>
   </main>

@@ -97,6 +97,16 @@ const menuTranslations = {
     mn: "Олон хэлний яриа",
     ru: "Многоязычное общение"
   },
+  studentStore: {
+    ko: "학급 상점",
+    en: "Class Store",
+    ja: "クラス店",
+    zh: "班级商店",
+    vi: "Cửa hàng lớp học",
+    th: "ร้านค้าห้องเรียน",
+    mn: "Ангийн дэлгүүр",
+    ru: "Магазин класса"
+  },
   teacher: {
     ko: "교사 관리",
     en: "Teacher Dashboard",
@@ -106,6 +116,16 @@ const menuTranslations = {
     th: "จัดการครู",
     mn: "Багшийн удирдлага",
     ru: "Панель учителя"
+  },
+  teacherStore: {
+    ko: "상점 관리",
+    en: "Store Admin",
+    ja: "店管理",
+    zh: "商店管理",
+    vi: "Quản lý cửa hàng",
+    th: "จัดการร้านค้า",
+    mn: "Дэлгүүр удирдах",
+    ru: "Управление магазином"
   },
   aiDocs: {
     ko: "AI 행정",
@@ -430,6 +450,39 @@ const studentUiTranslations = {
   teacherDefaultName: { ko: "선생님", en: "Teacher", ja: "先生", zh: "老师", vi: "Thầy cô", th: "ครู", mn: "Багш", ru: "Учитель" },
   senderLabel: { ko: "보낸 사람", en: "From", ja: "送信者", zh: "发送人", vi: "Người gửi", th: "ผู้ส่ง", mn: "Илгээсэн хүн", ru: "Отправитель" },
   teacherMessageEmpty: { ko: "아직 선생님에게 받은 메시지가 없습니다.", en: "No teacher messages yet.", ja: "先生からのメッセージはまだありません。", zh: "还没有收到老师的消息。", vi: "Chưa có tin nhắn từ thầy cô.", th: "ยังไม่มีข้อความจากครู", mn: "Багшаас зурвас хараахан алга.", ru: "Пока нет сообщений от учителя." },
+  studentStoreTitle: { ko: "학급 상점", en: "Class Store", ja: "クラス店", zh: "班级商店", vi: "Cửa hàng lớp học", th: "ร้านค้าห้องเรียน", mn: "Ангийн дэлгүүр", ru: "Магазин класса" },
+  studentStoreDescription: {
+    ko: "활동으로 모은 울림 포인트로 선생님이 올린 물건과 특권을 구매할 수 있습니다.",
+    en: "Use ULIM points earned from activities to buy items and privileges from your teacher.",
+    ja: "活動で集めたウリムポイントで、先生が登録した品物や特典を購入できます。",
+    zh: "可以用活动获得的 ULIM 点数购买老师上架的物品和特权。",
+    vi: "Dùng điểm ULIM từ hoạt động để mua đồ vật và đặc quyền thầy cô đăng.",
+    th: "ใช้คะแนน ULIM จากกิจกรรมซื้อของหรือสิทธิพิเศษที่ครูลงไว้",
+    mn: "Үйл ажиллагаагаар цуглуулсан ULIM оноогоор багшийн тавьсан зүйл, эрхийг авна.",
+    ru: "Используйте баллы ULIM за активности, чтобы покупать предметы и привилегии учителя."
+  },
+  storeBalanceLabel: { ko: "사용 가능 포인트", en: "Available Points", ja: "使えるポイント", zh: "可用点数", vi: "Điểm có thể dùng", th: "คะแนนที่ใช้ได้", mn: "Ашиглах оноо", ru: "Доступные баллы" },
+  storeGuide: {
+    ko: "구매하면 울림 통장에서 포인트가 차감되고 구매 내역이 선생님에게 전달됩니다.",
+    en: "Purchases subtract points from your ULIM bank and send the record to your teacher.",
+    ja: "購入するとウリム通帳からポイントが引かれ、購入記録が先生に届きます。",
+    zh: "购买后会从 ULIM 存折扣除点数，并把记录发送给老师。",
+    vi: "Khi mua, điểm sẽ trừ trong sổ ULIM và lịch sử mua sẽ gửi cho thầy cô.",
+    th: "เมื่อซื้อ คะแนนจะถูกหักจากบัญชี ULIM และส่งประวัติให้ครู",
+    mn: "Авахад ULIM данснаас оноо хасагдаж, худалдан авалт багшид очно.",
+    ru: "При покупке баллы списываются из копилки ULIM, а запись отправляется учителю."
+  },
+  storeItemsTitle: { ko: "판매 중인 물건", en: "Items for Sale", ja: "販売中の品物", zh: "正在出售", vi: "Đồ đang bán", th: "ของที่ขายอยู่", mn: "Зарагдаж буй зүйл", ru: "Товары в продаже" },
+  purchaseHistoryTitle: { ko: "내 구매 내역", en: "My Purchases", ja: "自分の購入記録", zh: "我的购买记录", vi: "Lịch sử mua của em", th: "ประวัติการซื้อของฉัน", mn: "Миний худалдан авалт", ru: "Мои покупки" },
+  purchaseButton: { ko: "구매", en: "Buy", ja: "購入", zh: "购买", vi: "Mua", th: "ซื้อ", mn: "Авах", ru: "Купить" },
+  purchasedButton: { ko: "구매 완료", en: "Purchased", ja: "購入済み", zh: "已购买", vi: "Đã mua", th: "ซื้อแล้ว", mn: "Авсан", ru: "Куплено" },
+  storeEmpty: { ko: "아직 판매 중인 물건이 없습니다.", en: "No items are for sale yet.", ja: "販売中の品物はまだありません。", zh: "还没有正在出售的物品。", vi: "Chưa có đồ nào đang bán.", th: "ยังไม่มีของขาย", mn: "Одоогоор зарах зүйл алга.", ru: "Пока нет товаров." },
+  purchaseEmpty: { ko: "아직 구매 내역이 없습니다.", en: "No purchases yet.", ja: "購入記録はまだありません。", zh: "还没有购买记录。", vi: "Chưa có lịch sử mua.", th: "ยังไม่มีประวัติการซื้อ", mn: "Худалдан авалт алга.", ru: "Покупок пока нет." },
+  insufficientPoints: { ko: "포인트 부족", en: "Not Enough Points", ja: "ポイント不足", zh: "点数不足", vi: "Thiếu điểm", th: "คะแนนไม่พอ", mn: "Оноо хүрэхгүй", ru: "Недостаточно баллов" },
+  soldOut: { ko: "재고 없음", en: "Sold Out", ja: "在庫なし", zh: "无库存", vi: "Hết hàng", th: "หมด", mn: "Дууссан", ru: "Нет в наличии" },
+  stockLabel: { ko: "재고", en: "Stock", ja: "在庫", zh: "库存", vi: "Tồn kho", th: "คงเหลือ", mn: "Нөөц", ru: "Остаток" },
+  unlimitedStock: { ko: "무제한", en: "Unlimited", ja: "無制限", zh: "无限", vi: "Không giới hạn", th: "ไม่จำกัด", mn: "Хязгааргүй", ru: "Без лимита" },
+  deliveredWaiting: { ko: "지급 대기", en: "Waiting", ja: "受け取り待ち", zh: "等待发放", vi: "Đang chờ nhận", th: "รอรับ", mn: "Хүлээгдэж байна", ru: "Ожидает выдачи" },
   bankEmpty: { ko: "아직 통장 기록이 없습니다. 체크인부터 시작해 보세요.", en: "No bank records yet. Start with a check-in.", ja: "通帳記録はまだありません。チェックインから始めましょう。", zh: "还没有存折记录。先从签到开始吧。", vi: "Chưa có ghi chép trong sổ. Hãy bắt đầu bằng điểm danh cảm xúc.", th: "ยังไม่มีประวัติบัญชี เริ่มจากการเช็กอินได้เลย", mn: "Дансны бүртгэл хараахан алга. Тэмдэглэлээс эхлээрэй.", ru: "Пока нет записей. Начните с отметки." },
   noCheckins: { ko: "아직 남긴 체크인 기록이 없습니다.", en: "You do not have any check-ins yet.", ja: "まだチェックイン記録がありません。", zh: "还没有签到记录。", vi: "Em chưa có ghi chép điểm danh.", th: "ยังไม่มีบันทึกเช็กอิน", mn: "Тэмдэглэл хараахан алга.", ru: "Пока нет отметок." },
   teacherReplyLabel: { ko: "선생님 답장", en: "Teacher Reply", ja: "先生の返信", zh: "老师回复", vi: "Trả lời của thầy cô", th: "คำตอบจากครู", mn: "Багшийн хариу", ru: "Ответ учителя" },
@@ -442,6 +495,41 @@ const defaultMessages = [
   { name: "린", lang: "베트남어", sourceLangCode: "vi", text: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
   { name: "민수", lang: "한국어", sourceLangCode: "ko", text: "방과후 교실은 2층 도서실 옆에서 시작해요." },
   { name: "Sara", lang: "영어", sourceLangCode: "en", text: "What should I bring for tomorrow's club activity?" }
+];
+const defaultShopItems = [
+  {
+    id: "shop-seat-choice",
+    type: "shopItem",
+    name: "자리 선택권",
+    price: 80,
+    stock: -1,
+    category: "활동 특권",
+    description: "하루 동안 원하는 자리를 먼저 고를 수 있어요.",
+    active: true,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "shop-pencil",
+    type: "shopItem",
+    name: "연필 세트",
+    price: 60,
+    stock: 8,
+    category: "학용품",
+    description: "수업 준비를 돕는 기본 연필 세트입니다.",
+    active: true,
+    createdAt: "2026-01-02T00:00:00.000Z"
+  },
+  {
+    id: "shop-helper",
+    type: "shopItem",
+    name: "학급 도우미 선택권",
+    price: 120,
+    stock: 3,
+    category: "학급 경험",
+    description: "원하는 학급 도우미 역할을 하루 동안 신청할 수 있어요.",
+    active: true,
+    createdAt: "2026-01-03T00:00:00.000Z"
+  }
 ];
 
 const translationMemory = {
@@ -585,6 +673,7 @@ function applyMenuLanguage(languageCode = "ko") {
   if (currentUser?.role) renderHero(currentUser.role);
   renderMessages();
   renderStudentDashboard();
+  renderTeacherStore();
 }
 
 function applyStudentLanguage(languageCode = "ko") {
@@ -672,8 +761,16 @@ function isBankTransactionMessage(message) {
   return message?.type === "bankTransaction";
 }
 
+function isShopItemMessage(message) {
+  return message?.type === "shopItem";
+}
+
+function isShopPurchaseMessage(message) {
+  return message?.type === "shopPurchase";
+}
+
 function isHiddenSystemMessage(message) {
-  return isCheckinReplyMessage(message) || isBankTransactionMessage(message);
+  return isCheckinReplyMessage(message) || isBankTransactionMessage(message) || isShopItemMessage(message) || isShopPurchaseMessage(message);
 }
 
 function applyReplyMessagesToCheckins(checkins) {
@@ -710,6 +807,48 @@ function getStudentBankBalance(studentId = currentUser?.loginId) {
   return getStudentBankTransactions(studentId).reduce((sum, item) => sum + Number(item.amount || 0), 0);
 }
 
+function getShopItems() {
+  const itemMap = new Map(defaultShopItems.map((item) => [item.id, { ...item }]));
+  getMessages().filter(isShopItemMessage).forEach((item) => {
+    const itemId = item.itemId || item.id;
+    if (!itemId) return;
+    itemMap.set(itemId, { ...itemMap.get(itemId), ...item, id: itemId, active: item.active !== false });
+  });
+  return [...itemMap.values()]
+    .filter((item) => item.active !== false)
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
+function getShopPurchases() {
+  return getMessages()
+    .filter(isShopPurchaseMessage)
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
+function getItemPurchaseCount(itemId) {
+  return getShopPurchases().filter((purchase) => purchase.itemId === itemId).length;
+}
+
+function getItemRemainingStock(item) {
+  const stock = Number(item.stock ?? -1);
+  if (stock === -1) return -1;
+  return Math.max(0, stock - getItemPurchaseCount(item.id));
+}
+
+function formatUlim(amount) {
+  return `${Number(amount || 0).toLocaleString("ko-KR")} 울림`;
+}
+
+function getShopCategoryLabel(category) {
+  const labels = {
+    privilege: "활동 특권",
+    supply: "학용품",
+    experience: "학급 경험",
+    coupon: "쿠폰"
+  };
+  return labels[category] || category || "상점 물건";
+}
+
 async function saveBankTransaction({ studentId, studentName, activityType, amount, reason }) {
   if (!studentId || !amount) return;
   const transaction = {
@@ -724,7 +863,7 @@ async function saveBankTransaction({ studentId, studentName, activityType, amoun
     activityType,
     amount,
     reason,
-    text: `${reason} +${amount} 울림`,
+    text: `${reason} ${amount > 0 ? "+" : ""}${amount} 울림`,
     createdAt: new Date().toISOString()
   };
   const messages = getMessages();
@@ -860,6 +999,7 @@ async function enterApp(user) {
   renderRecipientControls();
   renderTeacherCheckins();
   renderStudentDashboard();
+  renderTeacherStore();
   updateStats();
   location.hash = user.role === "teacher" ? "#teacher" : "#student";
 }
@@ -923,7 +1063,7 @@ async function refreshFirebaseData() {
       saveJson(STORAGE_KEYS.checkins, recentCheckins);
     }
   }
-  const messageSnap = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(30)));
+  const messageSnap = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(100)));
   if (!messageSnap.empty) {
     const messages = messageSnap.docs.map((item) => item.data()).reverse();
     saveJson(STORAGE_KEYS.messages, messages);
@@ -1030,11 +1170,113 @@ function renderStudentBank() {
     history.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("bankEmpty", viewerLanguageCode))}</p>`;
     return;
   }
-  history.innerHTML = transactions.slice(0, 8).map((item) => `
-    <article class="bank-entry">
-      <span>+${Number(item.amount || 0).toLocaleString("ko-KR")} 울림</span>
-      <strong>${escapeHtml(bankRewardRules.find((rule) => rule.type === item.activityType)?.title[viewerLanguageCode] || item.reason || "활동 적립")}</strong>
-      <small>${escapeHtml(formatDateTime(item.createdAt, "방금 전"))}</small>
+  history.innerHTML = transactions.slice(0, 8).map((item) => {
+    const amount = Number(item.amount || 0);
+    const sign = amount > 0 ? "+" : "";
+    return `
+      <article class="bank-entry">
+        <span class="${amount < 0 ? "negative" : ""}">${sign}${amount.toLocaleString("ko-KR")} 울림</span>
+        <strong>${escapeHtml(bankRewardRules.find((rule) => rule.type === item.activityType)?.title[viewerLanguageCode] || item.reason || "활동 적립")}</strong>
+        <small>${escapeHtml(formatDateTime(item.createdAt, "방금 전"))}</small>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderStudentStore() {
+  const list = $("#studentStoreItems");
+  const balance = $("#storeBalance");
+  const count = $("#storeCount");
+  const history = $("#studentPurchaseHistory");
+  if (!list || !balance || !count || !history) return;
+  const viewerLanguageCode = getViewerLanguageCode();
+  const studentId = currentUser?.loginId || "demo";
+  const points = getStudentBankBalance(studentId);
+  const items = getShopItems();
+  const purchases = getShopPurchases().filter((purchase) => purchase.studentId === studentId || purchase.studentName === currentUser?.name);
+  balance.textContent = formatUlim(points);
+  count.textContent = `${items.length}개`;
+  if (!items.length) {
+    list.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("storeEmpty", viewerLanguageCode))}</p>`;
+  } else {
+    list.innerHTML = items.map((item) => {
+      const price = Number(item.price || 0);
+      const remaining = getItemRemainingStock(item);
+      const hasStock = remaining === -1 || remaining > 0;
+      const canBuy = points >= price && hasStock;
+      const buttonText = hasStock ? (points >= price ? getStudentUiText("purchaseButton", viewerLanguageCode) : getStudentUiText("insufficientPoints", viewerLanguageCode)) : getStudentUiText("soldOut", viewerLanguageCode);
+      const stockText = remaining === -1 ? getStudentUiText("unlimitedStock", viewerLanguageCode) : `${remaining}개`;
+      return `
+        <article class="store-item-card">
+          <div class="store-item-top">
+            <span class="store-item-icon">${escapeHtml(item.emoji || "상")}</span>
+            <span class="tag">${escapeHtml(getShopCategoryLabel(item.category))}</span>
+          </div>
+          <strong>${escapeHtml(item.name || "상점 물건")}</strong>
+          <p>${escapeHtml(item.description || "")}</p>
+          <div class="store-item-meta">
+            <span>${escapeHtml(getStudentUiText("stockLabel", viewerLanguageCode))}: ${escapeHtml(stockText)}</span>
+            <strong>${escapeHtml(formatUlim(price))}</strong>
+          </div>
+          <button class="primary full buy-shop-item" type="button" data-item-id="${escapeHtml(item.id)}" ${canBuy ? "" : "disabled"}>${escapeHtml(buttonText)}</button>
+        </article>
+      `;
+    }).join("");
+  }
+  if (!purchases.length) {
+    history.innerHTML = `<p class="muted">${escapeHtml(getStudentUiText("purchaseEmpty", viewerLanguageCode))}</p>`;
+  } else {
+    history.innerHTML = purchases.slice(0, 6).map((purchase) => `
+      <article class="purchase-entry">
+        <strong>${escapeHtml(purchase.itemName || "상점 물건")}</strong>
+        <span>${escapeHtml(formatUlim(purchase.totalPrice || purchase.price))}</span>
+        <small>${escapeHtml(formatDateTime(purchase.createdAt, "방금 전"))} · ${escapeHtml(getStudentUiText("deliveredWaiting", viewerLanguageCode))}</small>
+      </article>
+    `).join("");
+  }
+  $$(".buy-shop-item").forEach((button) => {
+    button.addEventListener("click", () => buyShopItem(button.dataset.itemId));
+  });
+}
+
+function renderTeacherStore() {
+  const itemList = $("#teacherShopItems");
+  const purchaseList = $("#teacherPurchaseList");
+  if (!itemList || !purchaseList) return;
+  const items = getShopItems();
+  if (!items.length) {
+    itemList.innerHTML = `<p class="muted">등록된 판매 물건이 없습니다. 왼쪽에서 물건을 올려 보세요.</p>`;
+  } else {
+    itemList.innerHTML = items.map((item) => {
+      const remaining = getItemRemainingStock(item);
+      const stockText = remaining === -1 ? "무제한" : `${remaining}개 남음`;
+      return `
+        <article class="store-item-card teacher-store-card">
+          <div class="store-item-top">
+            <span class="store-item-icon">${escapeHtml(item.emoji || "상")}</span>
+            <span class="tag">${escapeHtml(getShopCategoryLabel(item.category))}</span>
+          </div>
+          <strong>${escapeHtml(item.name || "상점 물건")}</strong>
+          <p>${escapeHtml(item.description || "")}</p>
+          <div class="store-item-meta">
+            <span>재고: ${escapeHtml(stockText)}</span>
+            <strong>${escapeHtml(formatUlim(item.price))}</strong>
+          </div>
+          <small>구매 ${getItemPurchaseCount(item.id)}건</small>
+        </article>
+      `;
+    }).join("");
+  }
+  const purchases = getShopPurchases();
+  if (!purchases.length) {
+    purchaseList.innerHTML = `<p class="muted">아직 학생 구매 내역이 없습니다.</p>`;
+    return;
+  }
+  purchaseList.innerHTML = purchases.slice(0, 20).map((purchase) => `
+    <article class="purchase-entry">
+      <strong>${escapeHtml(purchase.studentName || purchase.studentId || "학생")} · ${escapeHtml(purchase.itemName || "상점 물건")}</strong>
+      <span>${escapeHtml(formatUlim(purchase.totalPrice || purchase.price))}</span>
+      <small>${escapeHtml(formatDateTime(purchase.createdAt, "방금 전"))} · 지급 대기</small>
     </article>
   `).join("");
 }
@@ -1231,6 +1473,7 @@ function renderStudentDashboard() {
   renderStudentBank();
   renderStudentTeacherMessages();
   renderStudentCheckinHistory();
+  renderStudentStore();
 }
 
 async function saveCheckinReply(index) {
@@ -1464,6 +1707,110 @@ async function sendTeacherMessage() {
   }
 }
 
+async function addShopItem() {
+  const name = $("#shopItemName").value.trim();
+  const price = Number($("#shopItemPrice").value);
+  const stockValue = $("#shopItemStock").value.trim();
+  const stock = stockValue === "" ? -1 : Number(stockValue);
+  const category = $("#shopItemCategory").value;
+  const description = $("#shopItemDescription").value.trim();
+  if (!name) return showToast("판매 물건 이름을 입력해 주세요.");
+  if (!Number.isFinite(price) || price <= 0) return showToast("가격은 1 울림 이상으로 입력해 주세요.");
+  if (!Number.isFinite(stock)) return showToast("재고는 숫자로 입력해 주세요. 무제한은 -1입니다.");
+  const itemId = `shop-${Date.now()}`;
+  const item = {
+    id: itemId,
+    itemId,
+    type: "shopItem",
+    title: "학급 상점 물건",
+    name,
+    price,
+    stock,
+    category,
+    description,
+    active: true,
+    senderId: currentUser?.loginId || "teacher",
+    senderRole: "teacher",
+    sourceLangCode: "ko",
+    text: `${name} · ${price} 울림`,
+    createdAt: new Date().toISOString()
+  };
+  const messages = getMessages();
+  messages.push(item);
+  saveJson(STORAGE_KEYS.messages, messages);
+  if (firebaseAvailable) {
+    try {
+      await addDoc(collection(db, "messages"), { ...item, createdAt: serverTimestamp() });
+    } catch (error) {
+      console.warn("Failed to persist shop item.", error);
+      showToast("상점 물건을 브라우저에 임시 저장했습니다. Firebase 권한을 확인해 주세요.");
+    }
+  }
+  $("#shopItemName").value = "";
+  $("#shopItemPrice").value = "";
+  $("#shopItemStock").value = "-1";
+  $("#shopItemDescription").value = "";
+  renderTeacherStore();
+  renderStudentStore();
+  showToast("학급 상점에 판매 물건을 올렸습니다.");
+}
+
+async function buyShopItem(itemId) {
+  const item = getShopItems().find((candidate) => candidate.id === itemId);
+  if (!item) return showToast("판매 물건을 찾을 수 없습니다.");
+  const studentId = currentUser?.loginId || "demo";
+  const studentName = currentUser?.name || "학생";
+  const price = Number(item.price || 0);
+  const balance = getStudentBankBalance(studentId);
+  const remaining = getItemRemainingStock(item);
+  if (remaining !== -1 && remaining <= 0) return showToast("재고가 없습니다.");
+  if (balance < price) return showToast(`울림 포인트가 부족합니다. 현재 ${formatUlim(balance)}입니다.`);
+  const purchase = {
+    id: `purchase-${Date.now()}`,
+    type: "shopPurchase",
+    title: "학급 상점 구매",
+    name: studentName,
+    senderId: studentId,
+    senderRole: "student",
+    recipients: [studentId],
+    recipientNames: [studentName],
+    studentId,
+    studentName,
+    itemId: item.id,
+    itemName: item.name,
+    itemCategory: item.category,
+    quantity: 1,
+    price,
+    totalPrice: price,
+    delivered: false,
+    sourceLangCode: "ko",
+    text: `${studentName} ${item.name} 구매`,
+    createdAt: new Date().toISOString()
+  };
+  const messages = getMessages();
+  messages.push(purchase);
+  saveJson(STORAGE_KEYS.messages, messages);
+  await saveBankTransaction({
+    studentId,
+    studentName,
+    activityType: "shopPurchase",
+    amount: -price,
+    reason: `${item.name} 구매`
+  });
+  if (firebaseAvailable) {
+    try {
+      await addDoc(collection(db, "messages"), { ...purchase, createdAt: serverTimestamp() });
+    } catch (error) {
+      console.warn("Failed to persist shop purchase.", error);
+      showToast("구매 내역을 브라우저에 임시 저장했습니다. Firebase 권한을 확인해 주세요.");
+    }
+  }
+  renderStudentDashboard();
+  renderTeacherStore();
+  updateStats();
+  showToast(`${item.name} 구매가 완료되었습니다. 선생님 구매 내역에 표시됩니다.`);
+}
+
 async function generateDoc() {
   const file = $("#hwpFile").files[0];
   const type = $("#docType").value;
@@ -1547,6 +1894,7 @@ function setupEvents() {
     $("#cultureQuestion").textContent = cultureQuestions[Math.floor(Math.random() * cultureQuestions.length)];
   });
   $("#sendTeacherMessage").addEventListener("click", sendTeacherMessage);
+  $("#addShopItem").addEventListener("click", addShopItem);
   $("#generateDoc").addEventListener("click", generateDoc);
   $("#copyDoc").addEventListener("click", copyDoc);
 }
@@ -1571,6 +1919,7 @@ async function boot() {
   renderStudents();
   renderTeacherCheckins();
   renderStudentDashboard();
+  renderTeacherStore();
   updateStats();
   setupFilters();
   setupEvents();

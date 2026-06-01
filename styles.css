@@ -27,6 +27,7 @@ body {
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
 code { font-family: "Cascadia Mono", Consolas, monospace; }
 
 .app-only { display: none; }
@@ -420,6 +421,142 @@ td small {
   color: var(--green);
   font-weight: 900;
 }
+.bank-entry span.negative {
+  color: var(--coral);
+}
+.store-layout, .teacher-store-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, .38fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.teacher-store-layout {
+  grid-template-columns: minmax(280px, .45fr) minmax(0, 1fr);
+}
+.store-summary {
+  position: sticky;
+  top: 92px;
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid #d3eadb;
+  border-radius: var(--radius);
+  background: var(--green-soft);
+}
+.store-summary span {
+  color: var(--muted);
+  font-weight: 900;
+}
+.store-summary strong {
+  font-size: 34px;
+  color: var(--ink);
+}
+.store-summary p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 700;
+}
+.store-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.store-toolbar h3, .purchase-history-box h3 {
+  margin: 0;
+}
+.store-toolbar span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: var(--blue);
+  font-weight: 900;
+}
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+.teacher-store-grid {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+.store-item-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.store-item-card strong {
+  font-size: 18px;
+}
+.store-item-card p {
+  min-height: 42px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.store-item-top, .store-item-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.store-item-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #fff3df;
+  color: #9a5b00;
+  font-weight: 900;
+}
+.store-item-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+.store-item-meta strong {
+  color: var(--green);
+  font-size: 16px;
+}
+.purchase-history-box {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.purchase-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.purchase-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.purchase-entry strong {
+  min-width: 0;
+}
+.purchase-entry span {
+  color: var(--coral);
+  font-weight: 900;
+}
+.purchase-entry small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+.purchase-records {
+  grid-column: 1 / -1;
+}
 .teacher-message-box {
   background: #f6f9ff;
   border-color: #dce6ff;
@@ -485,7 +622,7 @@ td small {
 pre { white-space: pre-wrap; background: #f7f9fb; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; line-height: 1.65; min-height: 120px; overflow: auto; }
 .doc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .doc-toolbar h3 { margin: 0; }
-.schema-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.schema-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .schema-grid code { display: block; padding: 16px; border-radius: var(--radius); background: #eef6f2; color: #245f50; font-weight: 900; overflow-wrap: anywhere; }
 
 footer { text-align: center; color: var(--muted); padding: 38px 20px; }
@@ -507,10 +644,11 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
 .toast.show { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 1020px) {
-  .login-screen, .hero, .lounge-layout, .teacher-grid, .ai-workbench { grid-template-columns: 1fr; }
+  .login-screen, .hero, .lounge-layout, .teacher-grid, .ai-workbench, .store-layout, .teacher-store-layout { grid-template-columns: 1fr; }
   .support-grid, .dashboard { grid-template-columns: repeat(2, 1fr); }
   .schema-grid { grid-template-columns: repeat(2, 1fr); }
   .student-card { grid-template-columns: 1fr 1fr; }
+  .store-summary { position: static; }
   .top-nav { display: none; }
 }
 @media (max-width: 620px) {
@@ -525,6 +663,7 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
   .support-grid, .dashboard, .schema-grid { grid-template-columns: 1fr; }
   .student-tools, .student-card, .message-actions { grid-template-columns: 1fr; }
   .bank-rules, .bank-entry { grid-template-columns: 1fr; }
+  .store-grid, .teacher-store-grid, .purchase-entry { grid-template-columns: 1fr; }
   .composer { grid-template-columns: 1fr; }
   .hero-copy h1, .login-visual h1 { font-size: 36px; }
   .toast { left: 16px; right: 16px; }
