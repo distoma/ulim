@@ -505,6 +505,26 @@ const defaultShopItems = [
     stock: -1,
     category: "활동 특권",
     description: "하루 동안 원하는 자리를 먼저 고를 수 있어요.",
+    nameTranslations: {
+      ko: "자리 선택권",
+      en: "Seat Choice Pass",
+      ja: "席を選べる券",
+      zh: "座位选择券",
+      vi: "Phiếu chọn chỗ ngồi",
+      th: "บัตรเลือกที่นั่ง",
+      mn: "Суудал сонгох эрх",
+      ru: "Право выбрать место"
+    },
+    descriptionTranslations: {
+      ko: "하루 동안 원하는 자리를 먼저 고를 수 있어요.",
+      en: "Choose your preferred seat first for one day.",
+      ja: "一日、好きな席を先に選べます。",
+      zh: "一天内可以优先选择想坐的位置。",
+      vi: "Em có thể chọn chỗ ngồi mình muốn trước trong một ngày.",
+      th: "เลือกที่นั่งที่ต้องการก่อนได้หนึ่งวัน",
+      mn: "Нэг өдөр хүссэн суудлаа түрүүлж сонгоно.",
+      ru: "Можно первым выбрать место на один день."
+    },
     active: true,
     createdAt: "2026-01-01T00:00:00.000Z"
   },
@@ -516,6 +536,26 @@ const defaultShopItems = [
     stock: 8,
     category: "학용품",
     description: "수업 준비를 돕는 기본 연필 세트입니다.",
+    nameTranslations: {
+      ko: "연필 세트",
+      en: "Pencil Set",
+      ja: "鉛筆セット",
+      zh: "铅笔套装",
+      vi: "Bộ bút chì",
+      th: "ชุดดินสอ",
+      mn: "Харандааны багц",
+      ru: "Набор карандашей"
+    },
+    descriptionTranslations: {
+      ko: "수업 준비를 돕는 기본 연필 세트입니다.",
+      en: "A basic pencil set to help you get ready for class.",
+      ja: "授業の準備に役立つ基本の鉛筆セットです。",
+      zh: "帮助准备上课的基础铅笔套装。",
+      vi: "Bộ bút chì cơ bản giúp em chuẩn bị cho tiết học.",
+      th: "ชุดดินสอพื้นฐานสำหรับเตรียมตัวเรียน",
+      mn: "Хичээлдээ бэлтгэхэд туслах үндсэн харандааны багц.",
+      ru: "Базовый набор карандашей для подготовки к уроку."
+    },
     active: true,
     createdAt: "2026-01-02T00:00:00.000Z"
   },
@@ -527,6 +567,26 @@ const defaultShopItems = [
     stock: 3,
     category: "학급 경험",
     description: "원하는 학급 도우미 역할을 하루 동안 신청할 수 있어요.",
+    nameTranslations: {
+      ko: "학급 도우미 선택권",
+      en: "Class Helper Choice Pass",
+      ja: "学級係を選べる券",
+      zh: "班级小助手选择券",
+      vi: "Phiếu chọn vai trò hỗ trợ lớp",
+      th: "บัตรเลือกหน้าที่ผู้ช่วยห้องเรียน",
+      mn: "Ангийн туслах үүрэг сонгох эрх",
+      ru: "Право выбрать роль помощника класса"
+    },
+    descriptionTranslations: {
+      ko: "원하는 학급 도우미 역할을 하루 동안 신청할 수 있어요.",
+      en: "Apply for the class helper role you want for one day.",
+      ja: "一日、希望する学級係の役割を申し込めます。",
+      zh: "可以申请一天自己想做的班级小助手角色。",
+      vi: "Em có thể đăng ký vai trò hỗ trợ lớp mình muốn trong một ngày.",
+      th: "ขอทำหน้าที่ผู้ช่วยห้องเรียนที่ต้องการได้หนึ่งวัน",
+      mn: "Нэг өдөр хүссэн ангийн туслах үүргээ сонгож болно.",
+      ru: "Можно выбрать желаемую роль помощника класса на один день."
+    },
     active: true,
     createdAt: "2026-01-03T00:00:00.000Z"
   }
@@ -839,14 +899,31 @@ function formatUlim(amount) {
   return `${Number(amount || 0).toLocaleString("ko-KR")} 울림`;
 }
 
-function getShopCategoryLabel(category) {
+function getShopCategoryLabel(category, languageCode = getViewerLanguageCode()) {
+  const viewerLanguageCode = normalizeLanguage(languageCode);
   const labels = {
-    privilege: "활동 특권",
-    supply: "학용품",
-    experience: "학급 경험",
-    coupon: "쿠폰"
+    privilege: { ko: "활동 특권", en: "Privilege", ja: "特典", zh: "活动特权", vi: "Đặc quyền", th: "สิทธิพิเศษ", mn: "Эрх", ru: "Привилегия" },
+    supply: { ko: "학용품", en: "School Supply", ja: "学用品", zh: "学习用品", vi: "Đồ dùng học tập", th: "อุปกรณ์การเรียน", mn: "Хичээлийн хэрэгсэл", ru: "Школьные принадлежности" },
+    experience: { ko: "학급 경험", en: "Class Experience", ja: "学級体験", zh: "班级体验", vi: "Trải nghiệm lớp học", th: "ประสบการณ์ในห้องเรียน", mn: "Ангийн туршлага", ru: "Классный опыт" },
+    coupon: { ko: "쿠폰", en: "Coupon", ja: "クーポン", zh: "优惠券", vi: "Phiếu", th: "คูปอง", mn: "Купон", ru: "Купон" },
+    "활동 특권": { ko: "활동 특권", en: "Privilege", ja: "特典", zh: "活动特权", vi: "Đặc quyền", th: "สิทธิพิเศษ", mn: "Эрх", ru: "Привилегия" },
+    "학용품": { ko: "학용품", en: "School Supply", ja: "学用品", zh: "学习用品", vi: "Đồ dùng học tập", th: "อุปกรณ์การเรียน", mn: "Хичээлийн хэрэгсэл", ru: "Школьные принадлежности" },
+    "학급 경험": { ko: "학급 경험", en: "Class Experience", ja: "学級体験", zh: "班级体验", vi: "Trải nghiệm lớp học", th: "ประสบการณ์ในห้องเรียน", mn: "Ангийн туршлага", ru: "Классный опыт" },
+    "쿠폰": { ko: "쿠폰", en: "Coupon", ja: "クーポン", zh: "优惠券", vi: "Phiếu", th: "คูปอง", mn: "Купон", ru: "Купон" }
   };
-  return labels[category] || category || "상점 물건";
+  const entry = labels[category];
+  if (entry) return entry[viewerLanguageCode] || entry.ko;
+  return category || "상점 물건";
+}
+
+function getShopItemName(item, languageCode = getViewerLanguageCode()) {
+  const normalized = normalizeLanguage(languageCode);
+  return item.nameTranslations?.[normalized] || item.itemNameTranslations?.[normalized] || item.translations?.[normalized] || item.nameTranslations?.ko || item.itemNameTranslations?.ko || item.name || item.itemName || "상점 물건";
+}
+
+function getShopItemDescription(item, languageCode = getViewerLanguageCode()) {
+  const normalized = normalizeLanguage(languageCode);
+  return item.descriptionTranslations?.[normalized] || item.descriptionTranslations?.ko || item.description || "";
 }
 
 async function saveBankTransaction({ studentId, studentName, activityType, amount, reason }) {
@@ -1206,14 +1283,16 @@ function renderStudentStore() {
       const canBuy = points >= price && hasStock;
       const buttonText = hasStock ? (points >= price ? getStudentUiText("purchaseButton", viewerLanguageCode) : getStudentUiText("insufficientPoints", viewerLanguageCode)) : getStudentUiText("soldOut", viewerLanguageCode);
       const stockText = remaining === -1 ? getStudentUiText("unlimitedStock", viewerLanguageCode) : `${remaining}개`;
+      const itemName = getShopItemName(item, viewerLanguageCode);
+      const itemDescription = getShopItemDescription(item, viewerLanguageCode);
       return `
         <article class="store-item-card">
           <div class="store-item-top">
             <span class="store-item-icon">${escapeHtml(item.emoji || "상")}</span>
-            <span class="tag">${escapeHtml(getShopCategoryLabel(item.category))}</span>
+            <span class="tag">${escapeHtml(getShopCategoryLabel(item.category, viewerLanguageCode))}</span>
           </div>
-          <strong>${escapeHtml(item.name || "상점 물건")}</strong>
-          <p>${escapeHtml(item.description || "")}</p>
+          <strong>${escapeHtml(itemName)}</strong>
+          <p>${escapeHtml(itemDescription)}</p>
           <div class="store-item-meta">
             <span>${escapeHtml(getStudentUiText("stockLabel", viewerLanguageCode))}: ${escapeHtml(stockText)}</span>
             <strong>${escapeHtml(formatUlim(price))}</strong>
@@ -1228,7 +1307,7 @@ function renderStudentStore() {
   } else {
     history.innerHTML = purchases.slice(0, 6).map((purchase) => `
       <article class="purchase-entry">
-        <strong>${escapeHtml(purchase.itemName || "상점 물건")}</strong>
+        <strong>${escapeHtml(getShopItemName(getShopItems().find((item) => item.id === purchase.itemId) || purchase, viewerLanguageCode))}</strong>
         <span>${escapeHtml(formatUlim(purchase.totalPrice || purchase.price))}</span>
         <small>${escapeHtml(formatDateTime(purchase.createdAt, "방금 전"))} · ${escapeHtml(getStudentUiText("deliveredWaiting", viewerLanguageCode))}</small>
       </article>
@@ -1718,6 +1797,8 @@ async function addShopItem() {
   if (!Number.isFinite(price) || price <= 0) return showToast("가격은 1 울림 이상으로 입력해 주세요.");
   if (!Number.isFinite(stock)) return showToast("재고는 숫자로 입력해 주세요. 무제한은 -1입니다.");
   const itemId = `shop-${Date.now()}`;
+  const nameTranslations = await translateMessageText(name, "ko");
+  const descriptionTranslations = description ? await translateMessageText(description, "ko") : buildTranslationBundle("", "ko");
   const item = {
     id: itemId,
     itemId,
@@ -1728,6 +1809,8 @@ async function addShopItem() {
     stock,
     category,
     description,
+    nameTranslations,
+    descriptionTranslations,
     active: true,
     senderId: currentUser?.loginId || "teacher",
     senderRole: "teacher",
@@ -1778,6 +1861,7 @@ async function buyShopItem(itemId) {
     studentName,
     itemId: item.id,
     itemName: item.name,
+    itemNameTranslations: item.nameTranslations || buildTranslationBundle(item.name || "상점 물건", "ko"),
     itemCategory: item.category,
     quantity: 1,
     price,
