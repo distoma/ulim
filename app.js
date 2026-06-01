@@ -245,6 +245,12 @@ const checkinTextTranslations = {
     ru: "Сохранить запись"
   }
 };
+const bankRewardRules = [
+  { type: "checkin", title: "오늘 체크인", amount: 30, description: "하루 마음 기록을 남기면 적립" },
+  { type: "helpCheckin", title: "도움 요청", amount: 50, description: "도움이 필요하다고 표현하면 추가 격려" },
+  { type: "loungeMessage", title: "라운지 소통", amount: 15, description: "친구들과 다국어로 소통하면 적립" },
+  { type: "teacherReply", title: "선생님 답장 확인", amount: 10, description: "교사 피드백이 연결되면 적립" }
+];
 const defaultMessages = [
   { name: "린", lang: "베트남어", sourceLangCode: "vi", text: "Bạn có thể cho mình biết thực đơn hôm nay không?" },
   { name: "민수", lang: "한국어", sourceLangCode: "ko", text: "방과후 교실은 2층 도서실 옆에서 시작해요." },
@@ -353,6 +359,12 @@ function formatDateTime(value, fallback = "저장됨") {
   return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString("ko-KR");
 }
 
+function toMillis(value) {
+  if (!value) return 0;
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
 function normalizeLanguage(value) {
   return languageNames[value] ? value : languageAliases[value] || "ko";
 }
@@ -440,6 +452,14 @@ function isCheckinReplyMessage(message) {
   return message?.type === "checkinReply";
 }
 
+function isBankTransactionMessage(message) {
+  return message?.type === "bankTransaction";
+}
+
+function isHiddenSystemMessage(message) {
+  return isCheckinReplyMessage(message) || isBankTransactionMessage(message);
+}
+
 function applyReplyMessagesToCheckins(checkins) {
   const replyMessages = getMessages().filter(isCheckinReplyMessage);
   replyMessages.forEach((message) => {
@@ -458,6 +478,49 @@ function applyReplyMessagesToCheckins(checkins) {
     };
   });
   return checkins;
+}
+
+function getBankTransactions() {
+  return getMessages().filter(isBankTransactionMessage);
+}
+
+function getStudentBankTransactions(studentId = currentUser?.loginId) {
+  return getBankTransactions()
+    .filter((item) => item.studentId === studentId)
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
+function getStudentBankBalance(studentId = currentUser?.loginId) {
+  return getStudentBankTransactions(studentId).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+}
+
+async function saveBankTransaction({ studentId, studentName, activityType, amount, reason }) {
+  if (!studentId || !amount) return;
+  const transaction = {
+    type: "bankTransaction",
+    title: "울림 성장 통장",
+    name: "울림 통장",
+    senderRole: "system",
+    recipients: [studentId],
+    recipientNames: [studentName || "학생"],
+    studentId,
+    studentName: studentName || "학생",
+    activityType,
+    amount,
+    reason,
+    text: `${reason} +${amount} 울림`,
+    createdAt: new Date().toISOString()
+  };
+  const messages = getMessages();
+  messages.push(transaction);
+  saveJson(STORAGE_KEYS.messages, messages);
+  if (firebaseAvailable) {
+    try {
+      await addDoc(collection(db, "messages"), { ...transaction, createdAt: serverTimestamp() });
+    } catch (error) {
+      console.warn("Failed to persist bank transaction.", error);
+    }
+  }
 }
 
 function mergeStudents(remoteStudents = []) {
@@ -667,7 +730,7 @@ function renderMessages() {
   const viewerLanguageCode = getViewerLanguageCode();
   const messages = getMessages()
     .filter(canViewMessage)
-    .filter((message) => !isCheckinReplyMessage(message))
+    .filter((message) => !isHiddenSystemMessage(message))
     .filter((message) => activeFilter === "all" || message.lang === activeFilter);
   box.innerHTML = "";
   messages.forEach((message) => {
@@ -702,7 +765,7 @@ function renderStudentTeacherMessages() {
   const viewerLanguageCode = getViewerLanguageCode();
   const teacherMessages = getMessages()
     .filter((message) => message.senderRole === "teacher" || message.type === "teacher")
-    .filter((message) => !isCheckinReplyMessage(message))
+    .filter((message) => !isHiddenSystemMessage(message))
     .filter(canViewMessage)
     .slice(-10)
     .reverse();
@@ -721,6 +784,34 @@ function renderStudentTeacherMessages() {
       </article>
     `;
   }).join("");
+}
+
+function renderStudentBank() {
+  const balance = $("#bankBalance");
+  const rules = $("#bankRules");
+  const history = $("#bankHistory");
+  if (!balance || !rules || !history) return;
+  const studentId = currentUser?.loginId || "demo";
+  const transactions = getStudentBankTransactions(studentId);
+  balance.textContent = `${getStudentBankBalance(studentId).toLocaleString("ko-KR")} 울림`;
+  rules.innerHTML = bankRewardRules.map((rule) => `
+    <article class="bank-rule">
+      <strong>+${rule.amount}</strong>
+      <span>${escapeHtml(rule.title)}</span>
+      <small>${escapeHtml(rule.description)}</small>
+    </article>
+  `).join("");
+  if (!transactions.length) {
+    history.innerHTML = `<p class="muted">아직 통장 기록이 없습니다. 체크인부터 시작해 보세요.</p>`;
+    return;
+  }
+  history.innerHTML = transactions.slice(0, 8).map((item) => `
+    <article class="bank-entry">
+      <span>+${Number(item.amount || 0).toLocaleString("ko-KR")} 울림</span>
+      <strong>${escapeHtml(item.reason || "활동 적립")}</strong>
+      <small>${escapeHtml(formatDateTime(item.createdAt, "방금 전"))}</small>
+    </article>
+  `).join("");
 }
 
 function renderStudents() {
@@ -756,6 +847,7 @@ function renderStudents() {
       <div class="student-main">
         <strong>${escapeHtml(student.name)}</strong>
         <small>${escapeHtml(student.grade || "-")} · ${escapeHtml(student.classroom || "-")}</small>
+        <small>통장 ${getStudentBankBalance(studentId).toLocaleString("ko-KR")} 울림</small>
       </div>
       <div class="student-meta">
         <span>${escapeHtml(student.lang || student.language || "-")}</span>
@@ -910,6 +1002,7 @@ function renderStudentCheckinHistory() {
 }
 
 function renderStudentDashboard() {
+  renderStudentBank();
   renderStudentTeacherMessages();
   renderStudentCheckinHistory();
 }
@@ -960,6 +1053,13 @@ async function saveCheckinReply(index) {
     const messages = getMessages();
     messages.push(replyMessage);
     saveJson(STORAGE_KEYS.messages, messages);
+    await saveBankTransaction({
+      studentId: checkin.studentId || "demo",
+      studentName: checkin.studentName || "학생",
+      activityType: "teacherReply",
+      amount: 10,
+      reason: "선생님 답장 연결"
+    });
     let persistedToCloud = false;
     if (firebaseAvailable) {
       try {
@@ -1029,6 +1129,13 @@ async function saveCheckin() {
     }
     $("#checkinText").value = "";
     $("#helpCheck").checked = false;
+    await saveBankTransaction({
+      studentId: checkin.studentId,
+      studentName: checkin.studentName,
+      activityType: checkin.help ? "helpCheckin" : "checkin",
+      amount: checkin.help ? 50 : 30,
+      reason: checkin.help ? "도움 요청 체크인" : "오늘 체크인"
+    });
     renderTeacherCheckins();
     renderStudentDashboard();
     updateStats();
@@ -1061,8 +1168,18 @@ async function sendMessage() {
     messages.push(message);
     saveJson(STORAGE_KEYS.messages, messages);
     if (firebaseAvailable) await addDoc(collection(db, "messages"), { ...message, createdAt: serverTimestamp() });
+    if (currentUser?.role === "student") {
+      await saveBankTransaction({
+        studentId: currentUser.loginId,
+        studentName: currentUser.name,
+        activityType: "loungeMessage",
+        amount: 15,
+        reason: "다국어 라운지 소통"
+      });
+    }
     input.value = "";
     renderMessages();
+    renderStudentDashboard();
     showToast("라운지에 메시지를 보냈습니다.");
   } finally {
     sendButton.disabled = false;

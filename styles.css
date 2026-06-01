@@ -353,12 +353,72 @@ td small {
 }
 .notice-card { display: grid; gap: 12px; align-content: start; }
 .checkin-records { grid-column: 1 / -1; }
-.teacher-message-box, .reply-box {
+.bank-box, .teacher-message-box, .reply-box {
   margin-top: 18px;
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
+}
+.bank-box {
+  background: #fffdf8;
+  border-color: #f1dfb4;
+}
+.bank-summary {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: #253044;
+  color: #fff;
+}
+.bank-summary strong {
+  font-size: 30px;
+}
+.bank-summary span {
+  color: rgba(255, 255, 255, .72);
+  font-weight: 900;
+}
+.bank-rules {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+}
+.bank-rule, .bank-entry {
+  padding: 12px;
+  border: 1px solid #f1dfb4;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.bank-rule {
+  display: grid;
+  gap: 4px;
+}
+.bank-rule strong {
+  color: var(--coral);
+  font-size: 20px;
+}
+.bank-rule span, .bank-entry strong {
+  font-weight: 900;
+}
+.bank-rule small, .bank-entry small {
+  color: var(--muted);
+}
+.bank-history {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.bank-entry {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.bank-entry span {
+  color: var(--green);
+  font-weight: 900;
 }
 .teacher-message-box {
   background: #f6f9ff;
@@ -464,6 +524,7 @@ footer { text-align: center; color: var(--muted); padding: 38px 20px; }
   .panel { margin: 22px 0; padding: 24px 16px; border-left: 0; border-right: 0; }
   .support-grid, .dashboard, .schema-grid { grid-template-columns: 1fr; }
   .student-tools, .student-card, .message-actions { grid-template-columns: 1fr; }
+  .bank-rules, .bank-entry { grid-template-columns: 1fr; }
   .composer { grid-template-columns: 1fr; }
   .hero-copy h1, .login-visual h1 { font-size: 36px; }
   .toast { left: 16px; right: 16px; }
