@@ -2,6 +2,16 @@
 
 이 프로젝트는 기존 하루 체크인 아이디어를 확장해 이주 배경학생, 교사, 학부모 지원 흐름을 한곳에 모은 정적 홈페이지 프로토타입입니다.
 
+## 현재 배포 정보
+
+- GitHub 저장소: https://github.com/distoma/ulim
+- 홈페이지: https://distoma.github.io/ulim/
+- Firebase project ID: `ulim-3f09e`
+- Firebase Functions region: `asia-northeast3`
+- Functions runtime: `nodejs22`
+- 번역 함수: `translateMessage`
+- HWPX 문서 생성 함수: `generateHwpxDocument`
+
 ## 실행 방법
 
 1. `index.html` 파일을 브라우저에서 엽니다.
@@ -24,10 +34,59 @@
 - 교사가 학생 체크인 기록에 답장을 남기고, 학생 화면에서 선생님 답장 확인
 - 교사가 학생 관리 목록에서 학생을 선택해 번역 메시지를 발송
 - 체크인, 도움 요청, 라운지 소통, 교사 답장 연결을 `울림 성장 통장`에 적립하여 학생 활동 독려
+- 교사가 학급상점 물품을 등록/수정/삭제하고, 학생은 울림 포인트로 구매
+- 학급상점 물품명과 설명을 학생 모국어에 맞춰 자동 번역 표시
 - 학생 로그인 시 학생 도움 공간, 체크인, 다국어 대화 라운지만 표시
+- 학생 화면에서 선생님에게 받은 메시지, 본인 체크인 기록, 선생님 답장 확인
 - 교사 로그인 시 학생 관리창, 학생 메시지 발송, AI 행정 문서 생성, DB 설계 안내 표시
+- 교사 화면에서 HWPX 양식 업로드, 업무 종류 선택, 문서 조건 정리, 초안 생성, HWPX 다운로드
 - 체크인, 메시지, 행정 문서 초안을 Firebase Firestore 또는 `localStorage`에 저장
 - Firebase 설정 전에도 발표와 시연이 가능한 체험 계정 제공
+
+## 최근 작업 기록
+
+### 2026-06-16 디자인 개선
+
+- 제공 색상 팔레트를 기반으로 홈페이지 전체 색상 시스템을 정리했습니다.
+  - 베이지: `#F7C7AE`
+  - 연노랑: `#F5F8BE`
+  - 연블루그레이: `#C4D9D6`
+  - 옐로우: `#F9F973`
+  - 민트그린: `#BEE3C5`
+- 교사용 메인 제목과 주요 버튼을 어두운 녹색에서 밝은 주황/베이지 계열로 변경했습니다.
+- PC 화면에서 교사용 드롭다운 메뉴가 작게 보이지 않도록 반응형 높이를 적용했습니다.
+  - 상단 언어 선택 드롭다운: `54px` 이상
+  - 교사용 내부 드롭다운: `58px` 이상
+  - 드롭다운 글자: `15px`, `font-weight: 800`
+- GitHub Pages에서 이전 CSS가 캐시되는 문제를 줄이기 위해 `index.html`의 `styles.css` 링크에 버전 쿼리를 붙였습니다.
+
+### Firebase Functions 연동
+
+- `translateMessage` callable function으로 체크인, 교사 답장, 메시지, 학급상점 물품 설명을 다국어 번역합니다.
+- `generateHwpxDocument` callable function으로 업로드한 HWPX 양식을 분석하고 새 HWPX 문서를 생성합니다.
+- Functions는 `asia-northeast3` 리전과 `nodejs22` 런타임을 기준으로 배포합니다.
+
+### 학생/교사 기능 확장
+
+- 교사 화면의 학생 관리 창을 카드형/필터형 구조로 정리했습니다.
+- 학생 정보, 최근 체크인, 도움 요청 상태, 언어, 상담 메모를 한눈에 볼 수 있도록 구성했습니다.
+- 교사가 체크인 기록에 답장을 저장하면 학생 화면에서 학생 모국어로 확인할 수 있도록 번역 흐름을 연결했습니다.
+- 학생 도움 공간에 선생님 메시지, 오늘의 체크인, 나의 체크인 기록, 선생님 답장을 표시했습니다.
+- 학생 활동 기반 `울림 성장 통장`과 포인트 기반 `학급상점` 탭을 추가했습니다.
+
+### AI 행정 문서 생성
+
+- 교사가 기존 HWPX 양식을 업로드하면 Firebase Functions에서 내부 XML 텍스트를 분석합니다.
+- 업무 종류는 가정통신문, 업무추진 계획, 교육주간 운영계획, 학생 학습자료 제작, 상담 계획서, 다문화 학생 지원 계획을 기준으로 구성했습니다.
+- 업무별 참고 자료는 `functions-deploy/training-docs/{type}/` 폴더에 저장할 수 있습니다.
+- 생성 문서 초안은 오른쪽 영역에 표시하고, 결과 HWPX 파일은 다운로드할 수 있도록 구성했습니다.
+
+## 디자인 시스템 메모
+
+- 핵심 표면 색은 따뜻한 베이지/연노랑과 안정적인 민트/블루그레이를 함께 사용합니다.
+- 주요 행동 버튼은 밝은 주황 계열을 사용하고, 보조 버튼은 밝은 종이색 배경과 얇은 테두리를 사용합니다.
+- 카드 모서리는 `8px` 기준으로 유지합니다.
+- 교사용 선택 메뉴는 PC 화면에서 충분한 클릭 높이를 확보하도록 `clamp()`와 고정 최소 높이를 함께 사용합니다.
 
 ## 자동 번역을 위해 준비할 부분
 
@@ -141,6 +200,9 @@ students/{studentId}
 checkins/{checkinId}
 messages/{messageId}
 documents/{documentId}
+storeItems/{itemId}
+purchases/{purchaseId}
+pointLedger/{ledgerId}
 ```
 
 `students` 예시 문서:
@@ -154,9 +216,24 @@ documents/{documentId}
 }
 ```
 
-`checkins`, `messages`, `documents`는 홈페이지에서 저장 버튼을 누르면 자동으로 생성됩니다.
+`checkins`, `messages`, `documents`, `storeItems`, `purchases`, `pointLedger`는 홈페이지에서 저장/구매/생성 버튼을 누르면 자동으로 생성됩니다.
 
-### 5. Firestore 보안 규칙 예시
+### 5. HWPX 학습 자료 폴더
+
+업무 종류별 참고 HWPX 자료는 아래 폴더에 저장합니다.
+
+```text
+functions-deploy/training-docs/family-letter/
+functions-deploy/training-docs/business-plan/
+functions-deploy/training-docs/education-week/
+functions-deploy/training-docs/learning-material/
+functions-deploy/training-docs/counseling-plan/
+functions-deploy/training-docs/multicultural-support/
+```
+
+Firebase Functions는 이 폴더의 문서를 업무 종류별 참고 자료로 읽고 새 문서 생성에 활용합니다.
+
+### 6. Firestore 보안 규칙 예시
 
 아래 규칙은 이 정적 홈페이지 프로토타입을 위한 최소 예시입니다. 로그인 검사를 클라이언트에서 직접 하기 때문에 `accounts/{loginId}` 문서의 단건 읽기가 열려 있습니다. 실제 운영 서비스에서는 Firebase Authentication 또는 Cloud Functions 로그인 API로 바꾸는 것이 안전합니다.
 
@@ -190,8 +267,43 @@ service cloud.firestore {
       allow create, read: if true;
       allow update, delete: if false;
     }
+
+    match /storeItems/{itemId} {
+      allow read, create, update, delete: if true;
+    }
+
+    match /purchases/{purchaseId} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+
+    match /pointLedger/{ledgerId} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
   }
 }
+```
+
+## 배포 명령 메모
+
+홈페이지 수정 후 GitHub Pages에 반영:
+
+```bash
+cd ~/Projects/ulim
+git status
+git add .
+git commit -m "수정 내용 설명"
+git push
+```
+
+Firebase Functions 배포:
+
+```bash
+cd ~/Projects/ulim
+firebase deploy --only functions:translateMessage
+firebase deploy --only functions:generateHwpxDocument
+firebase functions:list
 ```
 
 ## 운영 서비스로 확장할 때 꼭 바꿀 점
