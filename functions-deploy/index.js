@@ -115,6 +115,7 @@ const DOCUMENT_GUIDES = {
     trainingRoots: [
       "learning_material",
       "001.다문화교육(온학교지원)/한국어교육 지도계획",
+      "003.업무지원 학습용 공문자료/한국어교육 지도계획",
       "002.학생맞춤통합지원(온학교지원)",
     ],
     titleSuffix: "학습자료",
