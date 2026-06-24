@@ -218,20 +218,42 @@ pointLedger/{ledgerId}
 
 `checkins`, `messages`, `documents`, `storeItems`, `purchases`, `pointLedger`는 홈페이지에서 저장/구매/생성 버튼을 누르면 자동으로 생성됩니다.
 
-### 5. HWPX 학습 자료 폴더
+### 5. HWPX/PDF 학습 자료 폴더
 
-업무 종류별 참고 HWPX 자료는 아래 폴더에 저장합니다.
+업무 종류별 참고 자료는 아래 폴더에 저장합니다. 각 폴더 안에는 `.hwpx`와 `.pdf` 파일을 함께 넣을 수 있습니다. Firebase Functions는 문서 생성 시 하위 폴더를 재귀적으로 읽고, 참고자료 텍스트를 추출해 새 HWPX 문서 생성에 활용합니다.
 
 ```text
-functions-deploy/training-docs/family-letter/
-functions-deploy/training-docs/business-plan/
-functions-deploy/training-docs/education-week/
-functions-deploy/training-docs/learning-material/
-functions-deploy/training-docs/counseling-plan/
-functions-deploy/training-docs/multicultural-support/
+functions-deploy/training-docs/
+  001.다문화교육(온학교지원)/
+    다문화교육 운영계획/
+    한국어학급 운영 품의서/
+    다문화관련 체험 가정통신문/
+    다문화교육주간 운영계획/
+    한국어교육 지도계획/
+    강사채용/
+  002.학생맞춤통합지원(온학교지원)/
+    상담 계획/
+    학생 지원 계획/
+    학부모 안내/
+  003.업무지원 학습용 공문자료/
+    다문화교육 운영계획/
+    한국어학급 운영 품의서/
+    다문화관련 체험 가정통신문/
+    다문화교육주간 운영계획/
+    한국어교육 지도계획/
+    강사채용/
 ```
 
-Firebase Functions는 이 폴더의 문서를 업무 종류별 참고 자료로 읽고 새 문서 생성에 활용합니다.
+예를 들어 업무지원 공문 참고자료는 아래처럼 넣습니다.
+
+```text
+functions-deploy/training-docs/003.업무지원 학습용 공문자료/다문화교육 운영계획/운영계획_예시.hwpx
+functions-deploy/training-docs/003.업무지원 학습용 공문자료/다문화교육 운영계획/운영계획_참고.pdf
+```
+
+기존 호환 폴더인 `family_notice/`, `work_plan/`, `education_week/`, `learning_material/`, `counseling_plan/`, `multicultural_support/`도 계속 읽습니다.
+
+참고 파일을 추가한 뒤에는 `generateHwpxDocument` 함수를 다시 배포해야 서버에 반영됩니다.
 
 ### 6. Firestore 보안 규칙 예시
 

@@ -1,6 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { TranslationServiceClient } = require("@google-cloud/translate").v3;
 const JSZip = require("jszip");
+const { PDFParse } = require("pdf-parse");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -82,31 +83,60 @@ exports.translateMessage = onCall(
 const DOCUMENT_GUIDES = {
   "가정통신문": {
     slug: "family_notice",
+    trainingRoots: [
+      "family_notice",
+      "001.다문화교육(온학교지원)/다문화관련 체험 가정통신문",
+      "003.업무지원 학습용 공문자료/다문화관련 체험 가정통신문",
+    ],
     titleSuffix: "안내",
     sections: ["안내 목적", "일시 및 대상", "주요 내용", "가정 협조 사항", "문의"],
   },
   "업무추진 계획": {
     slug: "work_plan",
+    trainingRoots: [
+      "work_plan",
+      "003.업무지원 학습용 공문자료",
+    ],
     titleSuffix: "업무추진 계획",
     sections: ["추진 배경", "목적", "방침", "세부 추진 내용", "역할 분담", "기대 효과"],
   },
   "교육주간 운영계획": {
     slug: "education_week",
+    trainingRoots: [
+      "education_week",
+      "001.다문화교육(온학교지원)/다문화교육주간 운영계획",
+      "003.업무지원 학습용 공문자료/다문화교육주간 운영계획",
+    ],
     titleSuffix: "교육주간 운영계획",
     sections: ["운영 개요", "운영 목표", "기간 및 대상", "세부 프로그램", "안전 관리", "평가 및 환류"],
   },
   "학생 학습자료 제작": {
     slug: "learning_material",
+    trainingRoots: [
+      "learning_material",
+      "001.다문화교육(온학교지원)/한국어교육 지도계획",
+      "002.학생맞춤통합지원(온학교지원)",
+    ],
     titleSuffix: "학습자료",
     sections: ["학습 목표", "핵심 개념", "쉬운 설명", "활동 과제", "확인 문제", "모국어 도움말"],
   },
   "상담 계획서": {
     slug: "counseling_plan",
+    trainingRoots: [
+      "counseling_plan",
+      "002.학생맞춤통합지원(온학교지원)",
+    ],
     titleSuffix: "상담 계획서",
     sections: ["상담 목적", "학생 현황", "상담 일정", "주요 질문", "지원 계획", "후속 확인"],
   },
   "다문화 학생 지원 계획": {
     slug: "multicultural_support",
+    trainingRoots: [
+      "multicultural_support",
+      "001.다문화교육(온학교지원)",
+      "003.업무지원 학습용 공문자료/다문화교육 운영계획",
+      "003.업무지원 학습용 공문자료/한국어학급 운영 품의서",
+    ],
     titleSuffix: "다문화 학생 지원 계획",
     sections: ["학생 현황", "지원 목표", "언어 지원", "교과 지원", "가정 연계", "점검 일정"],
   },
@@ -156,22 +186,76 @@ async function extractHwpxTexts(buffer) {
   return { zip, sectionName, xml, texts: extractTextsFromXml(xml) };
 }
 
+function splitReferenceText(text) {
+  return String(text || "")
+    .replace(/\r/g, "\n")
+    .split(/\n|(?<=다\.)\s+|(?<=요\.)\s+|(?<=니다\.)\s+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length >= 4)
+    .slice(0, 40);
+}
+
+async function extractPdfTexts(buffer) {
+  const parser = new PDFParse({ data: buffer });
+  try {
+    const result = await parser.getText();
+    return splitReferenceText(result.text);
+  } finally {
+    if (typeof parser.destroy === "function") {
+      await parser.destroy();
+    }
+  }
+}
+
+function collectTrainingFiles(rootDir, collected = []) {
+  if (!fs.existsSync(rootDir)) return collected;
+  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(rootDir, entry.name);
+    if (entry.isDirectory()) {
+      collectTrainingFiles(fullPath, collected);
+      continue;
+    }
+    const ext = path.extname(entry.name).toLowerCase();
+    if (ext === ".hwpx" || ext === ".pdf") {
+      collected.push({ filePath: fullPath, fileName: entry.name, ext });
+    }
+  }
+  return collected;
+}
+
+function getTrainingRoots(guide) {
+  const roots = guide.trainingRoots || [guide.slug];
+  return [...new Set(roots)].map((folder) => path.join(TRAINING_DOCS_DIR, folder));
+}
+
 async function loadTrainingTexts(type) {
   const guide = DOCUMENT_GUIDES[type] || DOCUMENT_GUIDES["가정통신문"];
-  const dir = path.join(TRAINING_DOCS_DIR, guide.slug);
-  if (!fs.existsSync(dir)) return [];
-  const files = fs.readdirSync(dir).filter((name) => name.toLowerCase().endsWith(".hwpx"));
+  const files = getTrainingRoots(guide)
+    .flatMap((rootDir) => collectTrainingFiles(rootDir))
+    .sort((a, b) => a.filePath.localeCompare(b.filePath, "ko"));
   const samples = [];
-  for (const fileName of files.slice(0, 5)) {
+  const seen = new Set();
+  for (const file of files) {
+    if (seen.has(file.filePath)) continue;
+    seen.add(file.filePath);
+    if (samples.length >= 12) break;
     try {
-      const buffer = fs.readFileSync(path.join(dir, fileName));
-      const parsed = await extractHwpxTexts(buffer);
+      const buffer = fs.readFileSync(file.filePath);
+      const texts = file.ext === ".pdf"
+        ? await extractPdfTexts(buffer)
+        : (await extractHwpxTexts(buffer)).texts;
       samples.push({
-        fileName,
-        texts: parsed.texts.slice(0, 30),
+        fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
+        fileType: file.ext.slice(1),
+        texts: texts.slice(0, 30),
       });
     } catch (error) {
-      console.warn("Training HWPX parse failed", { fileName, message: error.message });
+      console.warn("Training document parse failed", {
+        fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
+        fileType: file.ext.slice(1),
+        message: error.message,
+      });
     }
   }
   return samples;
@@ -290,6 +374,7 @@ exports.generateHwpxDocument = onCall(
           sectionName: parsed.sectionName,
           extractedTextCount: parsed.texts.length,
           trainingSampleCount: trainingSamples.length,
+          trainingFileTypes: [...new Set(trainingSamples.map((sample) => sample.fileType))],
           trainingFolder: (DOCUMENT_GUIDES[docType] || DOCUMENT_GUIDES["가정통신문"]).slug,
         },
       };
