@@ -11,6 +11,8 @@ const SUPPORTED_LANGS = new Set(["ko", "en", "ja", "zh", "vi", "th", "mn", "ru"]
 
 const translationClient = new TranslationServiceClient();
 const TRAINING_DOCS_DIR = path.join(__dirname, "training-docs");
+const TRAINING_MANIFEST_URL = process.env.TRAINING_MANIFEST_URL || "https://distoma.github.io/ulim/functions-deploy/training-docs/manifest.json";
+const TRAINING_SITE_BASE_URL = process.env.TRAINING_SITE_BASE_URL || "https://distoma.github.io/ulim/";
 
 function normalizeLang(lang) {
   return typeof lang === "string" && SUPPORTED_LANGS.has(lang) ? lang : null;
@@ -80,7 +82,7 @@ exports.translateMessage = onCall(
   }
 );
 
-const DOCUMENT_GUIDES = {
+const BASE_DOCUMENT_GUIDES = {
   "가정통신문": {
     slug: "family_notice",
     trainingRoots: [
@@ -142,6 +144,45 @@ const DOCUMENT_GUIDES = {
     sections: ["학생 현황", "지원 목표", "언어 지원", "교과 지원", "가정 연계", "점검 일정"],
   },
 };
+
+let trainingManifestCache = null;
+
+function normalizeManifestGuide(type) {
+  if (!type || !type.label) return null;
+  return {
+    slug: type.id || safeString(type.label).replace(/\s+/g, "_"),
+    titleSuffix: type.titleSuffix || type.label,
+    sections: Array.isArray(type.sections) && type.sections.length ? type.sections : BASE_DOCUMENT_GUIDES["업무추진 계획"].sections,
+    purpose: type.purpose || "업로드된 학습자료의 문체와 구조를 참고해 행정 문서를 생성합니다.",
+    checks: Array.isArray(type.checks) && type.checks.length ? type.checks : ["일정", "대상", "담당자", "예산", "붙임 자료"],
+    trainingRoots: Array.isArray(type.trainingRoots) ? type.trainingRoots : [type.folder].filter(Boolean),
+    trainingFiles: Array.isArray(type.files) ? type.files : [],
+  };
+}
+
+async function loadTrainingManifest() {
+  if (trainingManifestCache) return trainingManifestCache;
+  try {
+    const response = await fetch(TRAINING_MANIFEST_URL);
+    if (!response.ok) throw new Error(`manifest ${response.status}`);
+    trainingManifestCache = await response.json();
+    return trainingManifestCache;
+  } catch (error) {
+    console.warn("Training manifest fetch failed. Falling back to local folders.", {
+      url: TRAINING_MANIFEST_URL,
+      message: error.message,
+    });
+    trainingManifestCache = { documentTypes: [] };
+    return trainingManifestCache;
+  }
+}
+
+async function getDocumentGuide(type) {
+  if (BASE_DOCUMENT_GUIDES[type]) return BASE_DOCUMENT_GUIDES[type];
+  const manifest = await loadTrainingManifest();
+  const matched = (manifest.documentTypes || []).find((item) => item.label === type || item.id === type);
+  return normalizeManifestGuide(matched) || BASE_DOCUMENT_GUIDES["가정통신문"];
+}
 
 function safeString(value, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
@@ -230,31 +271,59 @@ function getTrainingRoots(guide) {
   return [...new Set(roots)].map((folder) => path.join(TRAINING_DOCS_DIR, folder));
 }
 
-async function loadTrainingTexts(type) {
-  const guide = DOCUMENT_GUIDES[type] || DOCUMENT_GUIDES["가정통신문"];
-  const files = getTrainingRoots(guide)
+function getLocalTrainingFiles(guide) {
+  return getTrainingRoots(guide)
     .flatMap((rootDir) => collectTrainingFiles(rootDir))
-    .sort((a, b) => a.filePath.localeCompare(b.filePath, "ko"));
+    .sort((a, b) => a.filePath.localeCompare(b.filePath, "ko"))
+    .map((file) => ({
+      key: file.filePath,
+      fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
+      fileType: file.ext.slice(1),
+      loadBuffer: () => fs.readFileSync(file.filePath),
+    }));
+}
+
+function getRemoteTrainingFiles(guide) {
+  return (guide.trainingFiles || [])
+    .filter((file) => file && (file.url || file.path) && ["hwpx", "pdf"].includes(file.type))
+    .map((file) => ({
+      key: file.url || file.path,
+      fileName: file.path || file.name,
+      fileType: file.type,
+      loadBuffer: async () => {
+        const fileUrl = file.url || new URL(String(file.path || "").split("/").map(encodeURIComponent).join("/"), TRAINING_SITE_BASE_URL).href;
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return Buffer.from(await response.arrayBuffer());
+      },
+    }));
+}
+
+async function loadTrainingTexts(type, guide) {
+  const files = [
+    ...getRemoteTrainingFiles(guide),
+    ...getLocalTrainingFiles(guide),
+  ];
   const samples = [];
   const seen = new Set();
   for (const file of files) {
-    if (seen.has(file.filePath)) continue;
-    seen.add(file.filePath);
+    if (seen.has(file.key)) continue;
+    seen.add(file.key);
     if (samples.length >= 12) break;
     try {
-      const buffer = fs.readFileSync(file.filePath);
-      const texts = file.ext === ".pdf"
+      const buffer = await file.loadBuffer();
+      const texts = file.fileType === "pdf"
         ? await extractPdfTexts(buffer)
         : (await extractHwpxTexts(buffer)).texts;
       samples.push({
-        fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
-        fileType: file.ext.slice(1),
+        fileName: file.fileName,
+        fileType: file.fileType,
         texts: texts.slice(0, 30),
       });
     } catch (error) {
       console.warn("Training document parse failed", {
-        fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
-        fileType: file.ext.slice(1),
+        fileName: file.fileName,
+        fileType: file.fileType,
         message: error.message,
       });
     }
@@ -262,8 +331,7 @@ async function loadTrainingTexts(type) {
   return samples;
 }
 
-function buildGeneratedContent({ type, date, target, prompt, trainingSamples }) {
-  const guide = DOCUMENT_GUIDES[type] || DOCUMENT_GUIDES["가정통신문"];
+function buildGeneratedContent({ type, date, target, prompt, trainingSamples, guide }) {
   const today = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Seoul" });
   const title = `${target} ${guide.titleSuffix}`;
   const issuedDate = date || today;
@@ -352,13 +420,15 @@ exports.generateHwpxDocument = onCall(
         throw new HttpsError("invalid-argument", "HWPX 파일은 8MB 이하로 업로드해 주세요.");
       }
       const parsed = await extractHwpxTexts(inputBuffer);
-      const trainingSamples = await loadTrainingTexts(docType);
+      const guide = await getDocumentGuide(docType);
+      const trainingSamples = await loadTrainingTexts(docType, guide);
       const content = buildGeneratedContent({
         type: docType,
         date: safeString(date, ""),
         target: cleanTarget,
         prompt: cleanPrompt,
         trainingSamples,
+        guide,
       });
       const modifiedXml = fillTextNodes(parsed.xml, content);
       parsed.zip.file(parsed.sectionName, modifiedXml);
@@ -376,7 +446,7 @@ exports.generateHwpxDocument = onCall(
           extractedTextCount: parsed.texts.length,
           trainingSampleCount: trainingSamples.length,
           trainingFileTypes: [...new Set(trainingSamples.map((sample) => sample.fileType))],
-          trainingFolder: (DOCUMENT_GUIDES[docType] || DOCUMENT_GUIDES["가정통신문"]).slug,
+          trainingFolder: guide.slug,
         },
       };
     } catch (error) {

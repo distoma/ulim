@@ -77,8 +77,9 @@
 ### AI 행정 문서 생성
 
 - 교사가 기존 HWPX 양식을 업로드하면 Firebase Functions에서 내부 XML 텍스트를 분석합니다.
-- 업무 종류는 가정통신문, 업무추진 계획, 교육주간 운영계획, 학생 학습자료 제작, 상담 계획서, 다문화 학생 지원 계획을 기준으로 구성했습니다.
-- 업무별 참고 자료는 `functions-deploy/training-docs/{type}/` 폴더에 저장할 수 있습니다.
+- 업무 종류는 `functions-deploy/training-docs/manifest.json`을 읽어 자동으로 구성합니다.
+- 업무별 참고 자료는 `functions-deploy/training-docs/` 아래에 대분류/세부 업무 폴더로 저장합니다.
+- `.hwpx`와 `.pdf` 참고자료를 모두 사용할 수 있으며, Functions는 GitHub Pages에 올라간 자료 URL을 읽어 문서 생성에 활용합니다.
 - 생성 문서 초안은 오른쪽 영역에 표시하고, 결과 HWPX 파일은 다운로드할 수 있도록 구성했습니다.
 
 ## 디자인 시스템 메모
@@ -220,7 +221,9 @@ pointLedger/{ledgerId}
 
 ### 5. HWPX/PDF 학습 자료 폴더
 
-업무 종류별 참고 자료는 아래 폴더에 저장합니다. 각 폴더 안에는 `.hwpx`와 `.pdf` 파일을 함께 넣을 수 있습니다. Firebase Functions는 문서 생성 시 하위 폴더를 재귀적으로 읽고, 참고자료 텍스트를 추출해 새 HWPX 문서 생성에 활용합니다.
+업무 종류별 참고 자료는 아래 폴더에 저장합니다. 각 폴더 안에는 `.hwpx`와 `.pdf` 파일을 함께 넣을 수 있습니다.
+
+홈페이지는 `manifest.json`을 읽어 교사용 `AI 행정 문서 생성`의 업무 종류 드롭다운을 자동으로 구성합니다. Firebase Functions는 문서 생성 시 `manifest.json`에 기록된 GitHub Pages URL에서 참고자료를 읽고, 텍스트를 추출해 새 HWPX 문서 생성에 활용합니다.
 
 ```text
 functions-deploy/training-docs/
@@ -253,7 +256,17 @@ functions-deploy/training-docs/003.업무지원 학습용 공문자료/다문화
 
 기존 호환 폴더인 `family_notice/`, `work_plan/`, `education_week/`, `learning_material/`, `counseling_plan/`, `multicultural_support/`도 계속 읽습니다.
 
-참고 파일을 추가한 뒤에는 `generateHwpxDocument` 함수를 다시 배포해야 서버에 반영됩니다.
+참고 파일을 추가하거나 폴더를 바꾼 뒤에는 manifest를 다시 만든 다음 GitHub에 올립니다.
+
+```bash
+cd ~/Projects/ulim
+node scripts/build-training-manifest.js
+git add functions-deploy/training-docs
+git commit -m "학습자료 추가"
+git push
+```
+
+Functions 코드를 수정하지 않고 참고자료만 추가한 경우에는 함수 재배포가 필요하지 않습니다. Functions는 GitHub Pages에 올라간 최신 `manifest.json`과 자료 파일을 실행 시점에 읽습니다.
 
 ### 6. Firestore 보안 규칙 예시
 

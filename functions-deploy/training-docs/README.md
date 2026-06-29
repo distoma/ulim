@@ -1,9 +1,13 @@
 # HWPX/PDF training documents
 
 업무별 참고 문서는 이 폴더 아래에 저장합니다. Firebase Functions는
-`generateHwpxDocument` 실행 시 하위 폴더를 재귀적으로 읽고, `.hwpx`와
-`.pdf` 파일의 텍스트를 참고자료로 사용합니다. 최종 생성 파일은 업로드한
-HWPX 양식을 기반으로 항상 `.hwpx`로 생성됩니다.
+`generateHwpxDocument` 실행 시 `manifest.json`에 기록된 GitHub Pages URL에서
+`.hwpx`와 `.pdf` 파일을 읽고, 텍스트를 참고자료로 사용합니다. 최종 생성
+파일은 업로드한 HWPX 양식을 기반으로 항상 `.hwpx`로 생성됩니다.
+
+`manifest.json`은 `scripts/build-training-manifest.js`가 이 폴더 구조를 분석해
+자동으로 생성합니다. 교사용 화면의 업무 종류 드롭다운도 이 manifest를 기준으로
+구성됩니다.
 
 ## 권장 폴더 구조
 
@@ -54,9 +58,16 @@ training-docs/
 
 ## 반영 방법
 
-새 참고 파일을 추가한 뒤에는 Functions를 다시 배포해야 서버에 반영됩니다.
+새 참고 파일을 추가한 뒤에는 manifest를 다시 만들고 GitHub에 올립니다.
 
 ```bash
 cd ~/Projects/ulim
-firebase deploy --only functions:generateHwpxDocument
+node scripts/build-training-manifest.js
+git add functions-deploy/training-docs
+git commit -m "학습자료 추가"
+git push
 ```
+
+참고자료만 추가한 경우에는 Functions 재배포가 필요하지 않습니다. Functions
+배포 패키지가 커지는 것을 막기 위해 `.hwpx`와 `.pdf` 파일은 Firebase 배포에서
+제외하고, GitHub Pages에 올라간 파일을 실행 시점에 읽습니다.

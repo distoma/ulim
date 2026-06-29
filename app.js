@@ -649,7 +649,7 @@ const cultureQuestions = [
   "한국 학교에서 처음 어려웠던 점을 친구와 어떻게 나누면 좋을까요?",
   "우리 반에서 새 친구가 편안해지도록 할 수 있는 작은 행동은 무엇일까요?"
 ];
-const documentTypeGuides = {
+let documentTypeGuides = {
   "가정통신문": {
     purpose: "가정에 안내할 핵심 사항을 쉬운 문장으로 전달",
     sections: ["제목", "인사말", "목적", "일시/장소", "대상", "세부 안내", "준비물", "문의처", "번역 안내"],
@@ -681,6 +681,7 @@ const documentTypeGuides = {
     checks: ["학생 모국어", "한국어 수준", "담임/전담 역할", "학부모 소통 방법"]
   }
 };
+let documentTrainingCatalog = [];
 
 let db = null;
 let currentUser = null;
@@ -2189,7 +2190,77 @@ ${guide.checks.map((check) => `- ${check}`).join("\n")}
 }
 
 function getDocumentTypeGuide(type) {
-  return documentTypeGuides[type] || documentTypeGuides["가정통신문"];
+  return documentTypeGuides[type] || documentTypeGuides["가정통신문"] || Object.values(documentTypeGuides)[0];
+}
+
+async function loadDocumentTrainingCatalog() {
+  try {
+    const response = await fetch("functions-deploy/training-docs/manifest.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`manifest ${response.status}`);
+    const manifest = await response.json();
+    const types = Array.isArray(manifest.documentTypes) ? manifest.documentTypes : [];
+    documentTrainingCatalog = types;
+    const manifestGuides = {};
+    types.forEach((type) => {
+      if (!type?.label) return;
+      manifestGuides[type.label] = {
+        purpose: type.purpose || "업로드된 학습자료를 참고해 행정 문서 초안을 구성합니다.",
+        sections: Array.isArray(type.sections) && type.sections.length ? type.sections : ["목적", "운영 개요", "세부 내용", "유의 사항", "붙임"],
+        checks: [
+          ...(Array.isArray(type.checks) ? type.checks : []),
+          `학습자료 ${type.files?.length || 0}개 참고`,
+          type.folder ? `자료 폴더: ${type.folder}` : "자료 폴더 확인"
+        ],
+        fileCount: type.files?.length || 0,
+        folder: type.folder,
+        category: type.category
+      };
+    });
+    documentTypeGuides = { ...documentTypeGuides, ...manifestGuides };
+    renderDocumentTypeOptions(types);
+  } catch (error) {
+    console.warn("Failed to load document training manifest.", error);
+    renderDocumentTypeOptions([]);
+  }
+}
+
+function renderDocumentTypeOptions(types = []) {
+  const select = $("#docType");
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = "";
+  if (types.length) {
+    const groups = new Map();
+    types.forEach((type) => {
+      if (!type?.label) return;
+      const category = type.category || "학습자료 기반 업무";
+      if (!groups.has(category)) groups.set(category, []);
+      groups.get(category).push(type);
+    });
+    groups.forEach((items, category) => {
+      const group = document.createElement("optgroup");
+      group.label = category;
+      items.forEach((type) => {
+        const option = document.createElement("option");
+        option.value = type.label;
+        option.textContent = `${type.label} (${type.files?.length || 0})`;
+        group.appendChild(option);
+      });
+      select.appendChild(group);
+    });
+  }
+  const fallbackGroup = document.createElement("optgroup");
+  fallbackGroup.label = "기본 문서 유형";
+  Object.keys(documentTypeGuides).forEach((type) => {
+    if (types.some((item) => item.label === type)) return;
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = type;
+    fallbackGroup.appendChild(option);
+  });
+  if (fallbackGroup.children.length) select.appendChild(fallbackGroup);
+  if ([...select.options].some((option) => option.value === current)) select.value = current;
+  renderDocumentWorkflow();
 }
 
 function analyzeUploadedDocument(file) {
@@ -2362,6 +2433,7 @@ async function boot() {
     console.error(error);
     $("#firebaseStatus").textContent = "Firebase 연결에 실패해 체험 모드로 실행됩니다.";
   }
+  await loadDocumentTrainingCatalog();
   renderMoods();
   renderMessages();
   renderStudents();
