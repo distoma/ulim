@@ -13,6 +13,7 @@ const translationClient = new TranslationServiceClient();
 const TRAINING_DOCS_DIR = path.join(__dirname, "training-docs");
 const TRAINING_MANIFEST_URL = process.env.TRAINING_MANIFEST_URL || "https://distoma.github.io/ulim/functions-deploy/training-docs/manifest.json";
 const TRAINING_SITE_BASE_URL = process.env.TRAINING_SITE_BASE_URL || "https://distoma.github.io/ulim/";
+const HWPX_ZIP_DATE = new Date("1980-01-01T00:00:00Z");
 
 function normalizeLang(lang) {
   return typeof lang === "string" && SUPPORTED_LANGS.has(lang) ? lang : null;
@@ -507,7 +508,13 @@ exports.generateHwpxDocument = onCall(
         guide,
       });
       const modifiedXml = fillTextNodes(parsed.xml, content);
-      parsed.zip.file(parsed.sectionName, modifiedXml);
+      parsed.zip.file(parsed.sectionName, modifiedXml, {
+        createFolders: false,
+        date: HWPX_ZIP_DATE,
+      });
+      for (const [name, file] of Object.entries(parsed.zip.files)) {
+        if (file.dir) parsed.zip.remove(name);
+      }
       const outputBuffer = await parsed.zip.generateAsync({
         type: "nodebuffer",
         compression: "STORE",
