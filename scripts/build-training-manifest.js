@@ -74,12 +74,12 @@ function inferGuide(label, categoryLabel) {
 }
 
 function fileInfo(filePath) {
-  const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/");
+  const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/").normalize("NFC");
   const ext = path.extname(filePath).toLowerCase().slice(1);
   const stat = fs.statSync(filePath);
   return {
     name: path.basename(filePath).normalize("NFC"),
-    path: relativePath.normalize("NFC"),
+    path: relativePath,
     url: new URL(relativePath.split("/").map(encodeURIComponent).join("/"), siteBaseUrl).href,
     type: ext,
     size: stat.size,

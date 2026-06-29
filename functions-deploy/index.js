@@ -292,13 +292,36 @@ function getRemoteTrainingFiles(guide) {
       fileName: file.path || file.name,
       fileType: file.type,
       size: Number(file.size) || 0,
-      loadBuffer: async () => {
-        const fileUrl = file.url || new URL(String(file.path || "").split("/").map(encodeURIComponent).join("/"), TRAINING_SITE_BASE_URL).href;
-        const response = await fetch(fileUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return Buffer.from(await response.arrayBuffer());
-      },
+      loadBuffer: () => fetchTrainingFileBuffer(file),
     }));
+}
+
+function buildTrainingFileUrls(file) {
+  const urls = [];
+  if (file.url) urls.push(file.url);
+  if (file.path) {
+    const normalizedUrl = new URL(
+      String(file.path).normalize("NFC").split("/").map(encodeURIComponent).join("/"),
+      TRAINING_SITE_BASE_URL
+    ).href;
+    urls.push(normalizedUrl);
+  }
+  return [...new Set(urls)];
+}
+
+async function fetchTrainingFileBuffer(file) {
+  const urls = buildTrainingFileUrls(file);
+  let lastError = null;
+  for (const fileUrl of urls) {
+    try {
+      const response = await fetch(fileUrl);
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("학습자료 URL을 만들 수 없습니다.");
 }
 
 async function loadTrainingTexts(type, guide) {
@@ -349,12 +372,7 @@ async function getFallbackHwpxTemplates(guide) {
       fileName: file.path || file.name,
       fileType: "hwpx",
       size: Number(file.size) || 0,
-      loadBuffer: async () => {
-        const fileUrl = file.url || new URL(String(file.path || "").split("/").map(encodeURIComponent).join("/"), TRAINING_SITE_BASE_URL).href;
-        const response = await fetch(fileUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return Buffer.from(await response.arrayBuffer());
-      },
+      loadBuffer: () => fetchTrainingFileBuffer(file),
     }));
   if (manifestTemplates.length) return manifestTemplates;
 
