@@ -510,7 +510,7 @@ exports.generateHwpxDocument = onCall(
       parsed.zip.file(parsed.sectionName, modifiedXml);
       const outputBuffer = await parsed.zip.generateAsync({
         type: "nodebuffer",
-        compression: "DEFLATE",
+        compression: "STORE",
       });
       const preview = `${content.title}\n\n${content.paragraphs.join("\n")}`;
       return {
