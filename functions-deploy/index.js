@@ -208,7 +208,7 @@ function decodeXmlText(value) {
 
 function extractTextsFromXml(xml) {
   const texts = [];
-  const regex = /<hp:t\b[^>]*>([\s\S]*?)<\/hp:t>/g;
+  const regex = /<hp:t\b(?![^>]*\/>)[^>]*>([\s\S]*?)<\/hp:t>/g;
   let match;
   while ((match = regex.exec(xml))) {
     const text = decodeXmlText(match[1]).replace(/\s+/g, " ").trim();
@@ -459,7 +459,7 @@ function fillTextNodes(xml, content) {
   const paragraphs = [content.title, content.issuedDate, ...content.paragraphs].map(escapeXml);
   let index = 0;
   let replacedUsefulText = 0;
-  const replaced = replaceKnownPlaceholders(xml, content).replace(/<hp:t\b([^>]*)>([\s\S]*?)<\/hp:t>/g, (full, attrs, inner) => {
+  const replaced = replaceKnownPlaceholders(xml, content).replace(/<hp:t\b(?![^>]*\/>)([^>]*)>([\s\S]*?)<\/hp:t>/g, (full, attrs, inner) => {
     const plain = decodeXmlText(inner).trim();
     if (!plain || ["제목", "내용", "본문", "작성"].some((token) => plain.includes(token))) {
       const next = paragraphs[index++];
