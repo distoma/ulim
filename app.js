@@ -2113,14 +2113,14 @@ async function generateDoc() {
   const fileAnalysis = analyzeUploadedDocument(file);
   if (downloadArea) downloadArea.hidden = true;
   if (downloadLink?.href?.startsWith("blob:")) URL.revokeObjectURL(downloadLink.href);
-  if (file && file.name.toLowerCase().endsWith(".hwpx") && generateHwpxCallable) {
+  if (generateHwpxCallable) {
     button.disabled = true;
     button.textContent = "HWPX 생성 중";
     try {
-      const fileBase64 = await fileToBase64(file);
+      const fileBase64 = file && file.name.toLowerCase().endsWith(".hwpx") ? await fileToBase64(file) : null;
       const response = await generateHwpxCallable({
         fileBase64,
-        fileName: file.name,
+        fileName: fileBase64 ? file.name : null,
         type,
         date,
         target,
@@ -2135,14 +2135,26 @@ HWPX 생성 결과
 - 양식 텍스트 수: ${data.analysis?.extractedTextCount ?? 0}
 - 업무별 학습자료 수: ${data.analysis?.trainingSampleCount ?? 0}
 - 학습자료 폴더: functions-deploy/training-docs/${data.analysis?.trainingFolder || ""}
+- 사용 양식: ${data.analysis?.templateSource === "uploaded" ? "업로드한 HWPX" : "학습자료 HWPX 기본 양식"}
+- 양식 파일: ${data.analysis?.templateName || "확인됨"}
 `;
       setHwpxDownload(data.fileBase64, data.fileName || `${type}.hwpx`);
-      saveGeneratedDocumentRecord({ type, date, target, prompt, result: $("#docResult").textContent, fileName: file.name, fileAnalysis, generatedFileName: data.fileName });
+      saveGeneratedDocumentRecord({ type, date, target, prompt, result: $("#docResult").textContent, fileName: file?.name || null, fileAnalysis, generatedFileName: data.fileName });
       showToast("한글문서(HWPX)를 생성했습니다.");
       return;
     } catch (error) {
       console.error(error);
-      showToast("HWPX 생성 함수 연결에 실패해 조건 정리 결과를 표시합니다.");
+      const message = error?.message || "HWPX 생성 함수 연결에 실패했습니다.";
+      $("#docResult").textContent = `HWPX 문서 생성에 실패했습니다.
+
+- 업무 종류: ${type}
+- 대상: ${target}
+- 핵심 내용: ${prompt}
+- 오류 내용: ${message}
+
+잠시 후 다시 시도하거나, HWPX 양식을 업로드한 뒤 생성해 주세요.`;
+      showToast(message);
+      return;
     } finally {
       button.disabled = false;
       button.textContent = "한글문서(HWPX) 생성";

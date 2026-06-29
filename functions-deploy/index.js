@@ -279,6 +279,7 @@ function getLocalTrainingFiles(guide) {
       key: file.filePath,
       fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
       fileType: file.ext.slice(1),
+      size: fs.statSync(file.filePath).size,
       loadBuffer: () => fs.readFileSync(file.filePath),
     }));
 }
@@ -290,6 +291,7 @@ function getRemoteTrainingFiles(guide) {
       key: file.url || file.path,
       fileName: file.path || file.name,
       fileType: file.type,
+      size: Number(file.size) || 0,
       loadBuffer: async () => {
         const fileUrl = file.url || new URL(String(file.path || "").split("/").map(encodeURIComponent).join("/"), TRAINING_SITE_BASE_URL).href;
         const response = await fetch(fileUrl);
@@ -329,6 +331,73 @@ async function loadTrainingTexts(type, guide) {
     }
   }
   return samples;
+}
+
+async function getFallbackHwpxTemplates(guide) {
+  const directTemplates = [
+    ...getRemoteTrainingFiles(guide),
+    ...getLocalTrainingFiles(guide),
+  ].filter((file) => file.fileType === "hwpx");
+  if (directTemplates.length) return directTemplates;
+
+  const manifest = await loadTrainingManifest();
+  const manifestTemplates = (manifest.documentTypes || [])
+    .flatMap((type) => normalizeManifestGuide(type)?.trainingFiles || [])
+    .filter((file) => file && file.type === "hwpx")
+    .map((file) => ({
+      key: file.url || file.path,
+      fileName: file.path || file.name,
+      fileType: "hwpx",
+      size: Number(file.size) || 0,
+      loadBuffer: async () => {
+        const fileUrl = file.url || new URL(String(file.path || "").split("/").map(encodeURIComponent).join("/"), TRAINING_SITE_BASE_URL).href;
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return Buffer.from(await response.arrayBuffer());
+      },
+    }));
+  if (manifestTemplates.length) return manifestTemplates;
+
+  return collectTrainingFiles(TRAINING_DOCS_DIR)
+    .filter((file) => file.ext === ".hwpx")
+    .map((file) => ({
+      key: file.filePath,
+      fileName: path.relative(TRAINING_DOCS_DIR, file.filePath),
+      fileType: "hwpx",
+      size: fs.statSync(file.filePath).size,
+      loadBuffer: () => fs.readFileSync(file.filePath),
+    }));
+}
+
+async function loadTemplateBuffer({ fileBase64, fileName, guide }) {
+  if (fileBase64 && typeof fileBase64 === "string") {
+    const cleanFileName = safeString(fileName, "uploaded-template.hwpx");
+    if (!cleanFileName.toLowerCase().endsWith(".hwpx")) {
+      throw new HttpsError("invalid-argument", "현재는 .hwpx 양식 파일만 생성 대상으로 지원합니다.");
+    }
+    const inputBuffer = Buffer.from(fileBase64, "base64");
+    if (inputBuffer.length > 8 * 1024 * 1024) {
+      throw new HttpsError("invalid-argument", "HWPX 파일은 8MB 이하로 업로드해 주세요.");
+    }
+    return {
+      buffer: inputBuffer,
+      fileName: cleanFileName,
+      source: "uploaded",
+    };
+  }
+
+  const templates = (await getFallbackHwpxTemplates(guide))
+    .sort((a, b) => (a.size || Number.MAX_SAFE_INTEGER) - (b.size || Number.MAX_SAFE_INTEGER));
+  const template = templates[0];
+  if (!template) {
+    throw new HttpsError("failed-precondition", "기본 양식으로 사용할 HWPX 학습자료를 찾을 수 없습니다.");
+  }
+  return {
+    buffer: await template.loadBuffer(),
+    fileName: path.basename(template.fileName || "ulim-template.hwpx"),
+    source: "training",
+    sourceName: template.fileName,
+  };
 }
 
 function buildGeneratedContent({ type, date, target, prompt, trainingSamples, guide }) {
@@ -403,24 +472,13 @@ exports.generateHwpxDocument = onCall(
   async (request) => {
     const { fileBase64, fileName, type, date, target, prompt } = request.data || {};
     const docType = safeString(type, "가정통신문");
-    const cleanFileName = safeString(fileName, "template.hwpx");
     const cleanTarget = safeString(target, "이주 배경학생 및 학부모");
     const cleanPrompt = safeString(prompt, "학생의 언어 배경을 고려하여 쉬운 한국어 안내와 번역 지원을 함께 제공합니다.");
 
-    if (!fileBase64 || typeof fileBase64 !== "string") {
-      throw new HttpsError("invalid-argument", "HWPX 파일 데이터가 필요합니다.");
-    }
-    if (!cleanFileName.toLowerCase().endsWith(".hwpx")) {
-      throw new HttpsError("invalid-argument", "현재는 .hwpx 양식 파일만 생성 대상으로 지원합니다.");
-    }
-
     try {
-      const inputBuffer = Buffer.from(fileBase64, "base64");
-      if (inputBuffer.length > 8 * 1024 * 1024) {
-        throw new HttpsError("invalid-argument", "HWPX 파일은 8MB 이하로 업로드해 주세요.");
-      }
-      const parsed = await extractHwpxTexts(inputBuffer);
       const guide = await getDocumentGuide(docType);
+      const template = await loadTemplateBuffer({ fileBase64, fileName, guide });
+      const parsed = await extractHwpxTexts(template.buffer);
       const trainingSamples = await loadTrainingTexts(docType, guide);
       const content = buildGeneratedContent({
         type: docType,
@@ -438,7 +496,7 @@ exports.generateHwpxDocument = onCall(
       });
       const preview = `${content.title}\n\n${content.paragraphs.join("\n")}`;
       return {
-        fileName: makeOutputFileName(cleanFileName, docType),
+        fileName: makeOutputFileName(template.fileName, docType),
         fileBase64: outputBuffer.toString("base64"),
         preview,
         analysis: {
@@ -447,6 +505,8 @@ exports.generateHwpxDocument = onCall(
           trainingSampleCount: trainingSamples.length,
           trainingFileTypes: [...new Set(trainingSamples.map((sample) => sample.fileType))],
           trainingFolder: guide.slug,
+          templateSource: template.source,
+          templateName: template.sourceName || template.fileName,
         },
       };
     } catch (error) {
