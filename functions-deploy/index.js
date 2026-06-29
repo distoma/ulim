@@ -4,6 +4,7 @@ const JSZip = require("jszip");
 const { PDFParse } = require("pdf-parse");
 const fs = require("node:fs");
 const path = require("node:path");
+const zlib = require("node:zlib");
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT || "ulim-3f09e";
 const LOCATION = "global";
@@ -13,7 +14,6 @@ const translationClient = new TranslationServiceClient();
 const TRAINING_DOCS_DIR = path.join(__dirname, "training-docs");
 const TRAINING_MANIFEST_URL = process.env.TRAINING_MANIFEST_URL || "https://distoma.github.io/ulim/functions-deploy/training-docs/manifest.json";
 const TRAINING_SITE_BASE_URL = process.env.TRAINING_SITE_BASE_URL || "https://distoma.github.io/ulim/";
-const HWPX_ZIP_DATE = new Date("1980-01-01T00:00:00Z");
 
 function normalizeLang(lang) {
   return typeof lang === "string" && SUPPORTED_LANGS.has(lang) ? lang : null;
@@ -476,6 +476,146 @@ function fillTextNodes(xml, content) {
   return replaced;
 }
 
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i += 1) {
+    let c = i;
+    for (let k = 0; k < 8; k += 1) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function findEndOfCentralDirectory(buffer) {
+  for (let offset = buffer.length - 22; offset >= 0; offset -= 1) {
+    if (buffer.readUInt32LE(offset) === 0x06054b50) return offset;
+  }
+  throw new Error("HWPX ZIP 중앙 디렉터리를 찾을 수 없습니다.");
+}
+
+function parseZipEntries(buffer) {
+  const eocdOffset = findEndOfCentralDirectory(buffer);
+  const centralSize = buffer.readUInt32LE(eocdOffset + 12);
+  const centralOffset = buffer.readUInt32LE(eocdOffset + 16);
+  const entries = [];
+  let offset = centralOffset;
+  const centralEnd = centralOffset + centralSize;
+  while (offset < centralEnd) {
+    if (buffer.readUInt32LE(offset) !== 0x02014b50) {
+      throw new Error("HWPX ZIP 중앙 디렉터리 항목이 올바르지 않습니다.");
+    }
+    const nameLength = buffer.readUInt16LE(offset + 28);
+    const extraLength = buffer.readUInt16LE(offset + 30);
+    const commentLength = buffer.readUInt16LE(offset + 32);
+    const localOffset = buffer.readUInt32LE(offset + 42);
+    const centralLength = 46 + nameLength + extraLength + commentLength;
+    const centralHeader = Buffer.from(buffer.subarray(offset, offset + centralLength));
+    const nameBuffer = Buffer.from(buffer.subarray(offset + 46, offset + 46 + nameLength));
+    const name = nameBuffer.toString("utf8");
+
+    if (buffer.readUInt32LE(localOffset) !== 0x04034b50) {
+      throw new Error(`HWPX ZIP 로컬 헤더를 찾을 수 없습니다: ${name}`);
+    }
+    const localNameLength = buffer.readUInt16LE(localOffset + 26);
+    const localExtraLength = buffer.readUInt16LE(localOffset + 28);
+    const dataOffset = localOffset + 30 + localNameLength + localExtraLength;
+    const compressedSize = buffer.readUInt32LE(offset + 20);
+    const localHeader = Buffer.from(buffer.subarray(localOffset, dataOffset));
+    const compressedData = Buffer.from(buffer.subarray(dataOffset, dataOffset + compressedSize));
+
+    entries.push({
+      name,
+      method: buffer.readUInt16LE(offset + 10),
+      localHeader,
+      centralHeader,
+      compressedData,
+      crc: buffer.readUInt32LE(offset + 16),
+      compressedSize,
+      uncompressedSize: buffer.readUInt32LE(offset + 24),
+    });
+    offset += centralLength;
+  }
+  return {
+    entries,
+    eocd: Buffer.from(buffer.subarray(eocdOffset)),
+  };
+}
+
+function buildZipData(entry, replacementText) {
+  if (replacementText == null) {
+    return {
+      compressedData: entry.compressedData,
+      crc: entry.crc,
+      compressedSize: entry.compressedSize,
+      uncompressedSize: entry.uncompressedSize,
+    };
+  }
+  const raw = Buffer.from(replacementText, "utf8");
+  if (entry.method === 0) {
+    return {
+      compressedData: raw,
+      crc: crc32(raw),
+      compressedSize: raw.length,
+      uncompressedSize: raw.length,
+    };
+  }
+  if (entry.method === 8) {
+    const compressedData = zlib.deflateRawSync(raw);
+    return {
+      compressedData,
+      crc: crc32(raw),
+      compressedSize: compressedData.length,
+      uncompressedSize: raw.length,
+    };
+  }
+  throw new Error(`지원하지 않는 HWPX ZIP 압축 방식입니다: ${entry.method}`);
+}
+
+function rebuildHwpxZip(originalBuffer, replacements) {
+  const parsed = parseZipEntries(originalBuffer);
+  const localParts = [];
+  const centralParts = [];
+  let localOffset = 0;
+
+  for (const entry of parsed.entries) {
+    const replacementText = Object.prototype.hasOwnProperty.call(replacements, entry.name)
+      ? replacements[entry.name]
+      : null;
+    const data = buildZipData(entry, replacementText);
+
+    const localHeader = Buffer.from(entry.localHeader);
+    localHeader.writeUInt32LE(data.crc, 14);
+    localHeader.writeUInt32LE(data.compressedSize, 18);
+    localHeader.writeUInt32LE(data.uncompressedSize, 22);
+    localParts.push(localHeader, data.compressedData);
+
+    const centralHeader = Buffer.from(entry.centralHeader);
+    centralHeader.writeUInt32LE(data.crc, 16);
+    centralHeader.writeUInt32LE(data.compressedSize, 20);
+    centralHeader.writeUInt32LE(data.uncompressedSize, 24);
+    centralHeader.writeUInt32LE(localOffset, 42);
+    centralParts.push(centralHeader);
+
+    localOffset += localHeader.length + data.compressedData.length;
+  }
+
+  const centralDirectory = Buffer.concat(centralParts);
+  const eocd = Buffer.from(parsed.eocd);
+  eocd.writeUInt32LE(centralDirectory.length, 12);
+  eocd.writeUInt32LE(localOffset, 16);
+  return Buffer.concat([...localParts, centralDirectory, eocd]);
+}
+
 function makeOutputFileName(originalName, type) {
   const base = safeString(originalName, "ulim-template.hwpx").replace(/\.(hwpx|hwp|docx|txt)$/i, "");
   const stamp = new Date().toISOString().slice(0, 10);
@@ -508,16 +648,8 @@ exports.generateHwpxDocument = onCall(
         guide,
       });
       const modifiedXml = fillTextNodes(parsed.xml, content);
-      parsed.zip.file(parsed.sectionName, modifiedXml, {
-        createFolders: false,
-        date: HWPX_ZIP_DATE,
-      });
-      for (const [name, file] of Object.entries(parsed.zip.files)) {
-        if (file.dir) parsed.zip.remove(name);
-      }
-      const outputBuffer = await parsed.zip.generateAsync({
-        type: "nodebuffer",
-        compression: "STORE",
+      const outputBuffer = rebuildHwpxZip(template.buffer, {
+        [parsed.sectionName]: modifiedXml,
       });
       const preview = `${content.title}\n\n${content.paragraphs.join("\n")}`;
       return {
