@@ -476,6 +476,10 @@ function fillTextNodes(xml, content) {
   return replaced;
 }
 
+function removeLineSegArrays(xml) {
+  return xml.replace(/<hp:linesegarray\b[^>]*>[\s\S]*?<\/hp:linesegarray>/g, "");
+}
+
 const crcTable = (() => {
   const table = new Uint32Array(256);
   for (let i = 0; i < 256; i += 1) {
@@ -647,7 +651,7 @@ exports.generateHwpxDocument = onCall(
         trainingSamples,
         guide,
       });
-      const modifiedXml = fillTextNodes(parsed.xml, content);
+      const modifiedXml = removeLineSegArrays(fillTextNodes(parsed.xml, content));
       const outputBuffer = rebuildHwpxZip(template.buffer, {
         [parsed.sectionName]: modifiedXml,
       });
